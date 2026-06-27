@@ -360,9 +360,9 @@ window.addEventListener('scroll', function() {
   }
   const maxScroll = document.body.scrollHeight - window.innerHeight;
   let s = Math.min(1, window.scrollY / maxScroll);
-  if (!trickComplete && s > 0.805) {
-    s = 0.805;
-    const clampY = Math.floor(0.805 * maxScroll);
+  if (!trickComplete && s > 0.840) {
+    s = 0.840;
+    const clampY = Math.floor(0.840 * maxScroll);
     window.scrollTo(0, clampY);
     scrollLocked = true;
     lockScrollY = clampY;
@@ -473,7 +473,7 @@ function render() {
   // -- UI state --
   hint.style.opacity = t > 0.015 ? '0' : '1';
 
-  if (t >= 0.805 && !trickComplete && !trickActive) {
+  if (t >= 0.840 && !trickComplete && !trickActive) {
     trickActive = true;
     trickTaps = 0;
     btn.style.display = 'block';
