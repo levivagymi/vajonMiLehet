@@ -316,7 +316,7 @@ initGyro();
 
 let trickTaps = 0;
 let trickActive = false;
-let btnX = 0, btnY = 0, btnVX = 2.5, btnVY = 1.8;
+let btnX = 0, btnY = 0, btnVX = 10, btnVY = 7;
 let trickComplete = false;
 let scrollLocked = false;
 let lockScrollY = 0;
@@ -366,7 +366,7 @@ btn.addEventListener('pointerdown', function(e) {
   setTimeout(() => counter.style.display = 'none', 500);
 
   // Speed up after each tap
-  const speed = 2.5 + trickTaps * 0.5;
+  const speed = 10 + trickTaps * 3;
   const angle = Math.random() * Math.PI * 2;
   btnVX = Math.cos(angle) * speed;
   btnVY = Math.sin(angle) * speed;
@@ -446,8 +446,8 @@ function render() {
     btn.style.display = 'block';
     btnX = W / 2;
     btnY = H * 0.72;
-    btnVX = 2.5;
-    btnVY = 1.8;
+    btnVX = 10;
+    btnVY = 7;
     btn.style.left = btnX + 'px';
     btn.style.top = btnY + 'px';
   }
