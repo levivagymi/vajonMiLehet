@@ -242,7 +242,7 @@ function build() {
   const s3 = scatter();
   const cat = toArrays(catImageLoaded || catPos());
   const s4 = scatter();
-  const t3 = toArrays(textPos('What do you think\nyour gift is?', 0.045, true));
+  const t3 = toArrays(textPos('What do you\nthink your\ngift is?', 0.09, true));
   const fin = toArrays(textPos('You think\nI\'d tell you?\nUnwrap it!', 0.09, true));
 
   // drift: 0 = no floating (hold shape), 1 = full floating (scatter)
