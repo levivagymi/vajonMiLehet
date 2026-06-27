@@ -91,7 +91,7 @@ function sampleCanvas(off) {
   const c = off.getContext('2d');
   const px = c.getImageData(0, 0, off.width, off.height).data;
   const pos = [];
-  const gap = Math.max(2, Math.round(3 * (BASE / 390)));
+  const gap = Math.max(2, Math.round(2.5 * (BASE / 390)));
   for (let y = 0; y < off.height; y += gap) {
     for (let x = 0; x < off.width; x += gap) {
       const i = (y * off.width + x) * 4;
@@ -245,24 +245,25 @@ function build() {
   const t3 = toArrays(textPos('What do you think\nyour gift is?', 0.07, true));
   const fin = toArrays(textPos('Now look\nin front\nof you', 0.11, true));
 
+  // drift: 0 = no floating (hold shape), 1 = full floating (scatter)
   keyframes = [
-    { t: 0.000, text: false, ...scatter() },
-    { t: 0.060, text: false, ...heart },
-    { t: 0.150, text: false, ...heart },
-    { t: 0.200, text: false, ...s1 },
-    { t: 0.260, text: true,  ...t1 },
-    { t: 0.370, text: true,  ...t1 },
-    { t: 0.420, text: false, ...s2 },
-    { t: 0.480, text: true,  ...t2 },
-    { t: 0.580, text: true,  ...t2 },
-    { t: 0.630, text: false, ...s3 },
-    { t: 0.690, text: false, ...cat },
-    { t: 0.750, text: false, ...cat },
-    { t: 0.800, text: false, ...s4 },
-    { t: 0.850, text: true,  ...t3 },
-    { t: 0.880, text: true,  ...t3 },
-    { t: 0.940, text: true,  ...fin },
-    { t: 1.000, text: true,  ...fin },
+    { t: 0.000, drift: 1.0, ...scatter() },
+    { t: 0.060, drift: 0.06, ...heart },
+    { t: 0.150, drift: 0.06, ...heart },
+    { t: 0.200, drift: 1.0, ...s1 },
+    { t: 0.260, drift: 0.04, ...t1 },
+    { t: 0.370, drift: 0.04, ...t1 },
+    { t: 0.420, drift: 1.0, ...s2 },
+    { t: 0.480, drift: 0.04, ...t2 },
+    { t: 0.580, drift: 0.04, ...t2 },
+    { t: 0.630, drift: 1.0, ...s3 },
+    { t: 0.690, drift: 0.06, ...cat },
+    { t: 0.750, drift: 0.06, ...cat },
+    { t: 0.800, drift: 1.0, ...s4 },
+    { t: 0.850, drift: 0.04, ...t3 },
+    { t: 0.880, drift: 0.04, ...t3 },
+    { t: 0.940, drift: 0.04, ...fin },
+    { t: 1.000, drift: 0.04, ...fin },
   ];
 }
 
@@ -421,9 +422,10 @@ function render() {
   let segLen = kfB.t - kfA.t;
   if (segLen <= 0) segLen = 1;
 
-  // -- Determine if current scene is text (reduce drift) --
-  const isText = kfA.text && kfB.text;
-  const driftScale = isText ? 0.08 : 1.0;
+  // -- Smoothly interpolate drift between keyframes --
+  let rawLocalT = (t - kfA.t) / segLen;
+  rawLocalT = Math.max(0, Math.min(1, rawLocalT));
+  const driftScale = kfA.drift + (kfB.drift - kfA.drift) * rawLocalT;
 
   // -- Render background ambient particles --
   ctx.clearRect(0, 0, W, H);
