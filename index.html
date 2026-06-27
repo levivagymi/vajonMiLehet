@@ -423,10 +423,9 @@ function render() {
     let x = ax + (bx - ax) * ease;
     let y = ay + (by - ay) * ease;
 
-    // Subtle organic drift (breathing)
     const drift = pDriftPhase[i];
-    x += Math.sin(time * 0.7 + drift) * 0.5;
-    y += Math.cos(time * 0.5 + drift * 1.4) * 0.5;
+    x += Math.sin(time * 0.6 + drift) * 3 + Math.sin(time * 1.3 + drift * 2.7) * 1.5;
+    y += Math.cos(time * 0.5 + drift * 1.4) * 3 + Math.cos(time * 1.1 + drift * 0.8) * 1.5;
 
     ctx.globalAlpha = pOpacity[i];
     const ci = i * 3;
