@@ -283,10 +283,10 @@ function build() {
     { t: 0.630, drift: 1.0, ...s3 },
     { t: 0.690, drift: 0.06, ...cat },
     { t: 0.750, drift: 0.06, ...cat },
-    { t: 0.800, drift: 1.0, ...s4 },
-    { t: 0.850, drift: 0.04, ...t3 },
-    { t: 0.880, drift: 0.04, ...t3 },
-    { t: 0.940, drift: 0.04, ...fin },
+    { t: 0.780, drift: 1.0, ...s4 },
+    { t: 0.830, drift: 0.04, ...t3 },
+    { t: 0.860, drift: 0.04, ...t3 },
+    { t: 0.950, drift: 0.04, ...fin },
     { t: 1.000, drift: 0.04, ...fin },
   ];
 }
@@ -450,7 +450,7 @@ function render() {
   // -- UI state --
   hint.style.opacity = t > 0.015 ? '0' : '1';
 
-  if (t >= 0.82 && !trickComplete && !trickActive) {
+  if (t >= 0.855 && !trickComplete && !trickActive) {
     trickActive = true;
     trickTaps = 0;
     scrollLocked = true;
