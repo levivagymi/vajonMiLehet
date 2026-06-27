@@ -201,6 +201,12 @@ catImg.onload = function() {
 };
 catImg.src = 'cat.jpg';
 
+// -- Line-art image --
+const lineArtImg = new Image();
+let lineArtReady = false;
+lineArtImg.onload = function() { lineArtReady = true; };
+lineArtImg.src = 'lineart.png';
+
 // -- Per-particle properties (persistent) --
 const pSize = new Float32Array(N);
 const pOpacity = new Float32Array(N);
@@ -221,6 +227,19 @@ function initParticleProps() {
 // -- Keyframe system --
 // Each keyframe: { t: scrollPosition, px: Float32Array(N), py: Float32Array(N) }
 let keyframes = [];
+
+function offScreen() {
+  const px = new Float32Array(N);
+  const py = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const edge = Math.floor(Math.random() * 4);
+    if (edge === 0) { px[i] = Math.random() * W; py[i] = -50 - Math.random() * 100; }
+    else if (edge === 1) { px[i] = Math.random() * W; py[i] = H + 50 + Math.random() * 100; }
+    else if (edge === 2) { px[i] = -50 - Math.random() * 100; py[i] = Math.random() * H; }
+    else { px[i] = W + 50 + Math.random() * 100; py[i] = Math.random() * H; }
+  }
+  return { px, py };
+}
 
 function scatter() {
   const px = new Float32Array(N);
@@ -271,9 +290,13 @@ function build() {
     { t: 0.690, drift: 0.06, ...cat },
     { t: 0.750, drift: 0.06, ...cat },
     { t: 0.780, drift: 1.0, ...s4 },
-    { t: 0.830, drift: 0.04, ...t3 },
-    { t: 0.860, drift: 0.04, ...t3 },
-    { t: 0.950, drift: 0.04, ...fin },
+    { t: 0.810, drift: 0.04, ...t3 },
+    { t: 0.840, drift: 0.04, ...t3 },
+    { t: 0.860, drift: 1.0, ...offScreen() },
+    { t: 0.870, drift: 1.0, ...offScreen() },
+    { t: 0.920, drift: 1.0, ...offScreen() },
+    { t: 0.930, drift: 1.0, ...scatter() },
+    { t: 0.960, drift: 0.04, ...fin },
     { t: 1.000, drift: 0.04, ...fin },
   ];
 }
@@ -437,7 +460,7 @@ function render() {
   // -- UI state --
   hint.style.opacity = t > 0.015 ? '0' : '1';
 
-  if (t >= 0.855 && !trickComplete && !trickActive) {
+  if (t >= 0.835 && !trickComplete && !trickActive) {
     trickActive = true;
     trickTaps = 0;
     scrollLocked = true;
@@ -526,6 +549,30 @@ function render() {
     ctx.globalAlpha = pOpacity[i];
     const sz = pSize[i] * spriteScale;
     ctx.drawImage(sprites[pColorIdx[i]], x - sz/2, y - sz/2, sz, sz);
+  }
+
+  // -- Line-art reveal --
+  if (lineArtReady && t >= 0.870 && t <= 0.920) {
+    let drawProgress;
+    const drawStart = 0.870, drawEnd = 0.900, eraseStart = 0.900, eraseEnd = 0.920;
+    if (t <= drawEnd) {
+      drawProgress = (t - drawStart) / (drawEnd - drawStart);
+    } else {
+      drawProgress = 1 - (t - eraseStart) / (eraseEnd - eraseStart);
+    }
+    drawProgress = Math.max(0, Math.min(1, drawProgress));
+    const imgAspect = lineArtImg.width / lineArtImg.height;
+    const drawH = H * 0.85;
+    const drawW = drawH * imgAspect;
+    const drawX = (W - drawW) / 2;
+    const drawY = (H - drawH) / 2;
+    ctx.save();
+    ctx.globalAlpha = drawProgress;
+    ctx.beginPath();
+    ctx.rect(0, 0, W, H * drawProgress);
+    ctx.clip();
+    ctx.drawImage(lineArtImg, drawX, drawY, drawW, drawH);
+    ctx.restore();
   }
 
   // -- Bursts --
