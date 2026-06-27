@@ -130,7 +130,7 @@ function heartPos(sf) {
   for (let t = 0; t <= Math.PI * 2; t += 0.01) {
     const hx = 16 * Math.pow(Math.sin(t), 3);
     const hy = 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
-    pts.push({ x: hx, y: -hy });
+    pts.push({ x: hx, y: hy });
   }
   let minY = Infinity, maxY = -Infinity;
   for (const p of pts) { minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
