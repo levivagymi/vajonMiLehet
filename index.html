@@ -145,29 +145,16 @@ function heartPos(sf) {
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const c = off.getContext('2d');
-  const scale = BASE * sf;
+  const s = BASE * sf;
   c.fillStyle = 'white';
   c.beginPath();
-  const pts = [];
-  for (let t = 0; t <= Math.PI * 2; t += 0.01) {
-    const hx = 16 * Math.pow(Math.sin(t), 3);
-    const hy = 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
-    pts.push({ x: hx, y: -hy });
-  }
-  let minY = Infinity, maxY = -Infinity;
-  for (const p of pts) { minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
-  const offsetY = (minY + maxY) / 2;
-  for (let i = 0; i < pts.length; i++) {
-    const px = CX + pts[i].x * scale / 17;
-    const py = CY + (pts[i].y - offsetY) * scale / 17;
-    if (i === 0) c.moveTo(px, py);
-    else c.lineTo(px, py);
-  }
+  c.moveTo(CX, CY - s * 0.35);
+  c.bezierCurveTo(CX + s * 0.02, CY - s * 0.6, CX + s * 0.55, CY - s * 0.6, CX + s * 0.55, CY - s * 0.2);
+  c.bezierCurveTo(CX + s * 0.55, CY + s * 0.05, CX + s * 0.25, CY + s * 0.35, CX, CY + s * 0.55);
+  c.bezierCurveTo(CX - s * 0.25, CY + s * 0.35, CX - s * 0.55, CY + s * 0.05, CX - s * 0.55, CY - s * 0.2);
+  c.bezierCurveTo(CX - s * 0.55, CY - s * 0.6, CX - s * 0.02, CY - s * 0.6, CX, CY - s * 0.35);
   c.closePath();
   c.fill();
-  c.strokeStyle = 'white';
-  c.lineWidth = BASE * 0.015;
-  c.stroke();
   return sampleCanvas(off);
 }
 
@@ -258,7 +245,7 @@ function toArrays(positions) {
 }
 
 function build() {
-  const heart = toArrays(heartPos(0.3));
+  const heart = toArrays(heartPos(0.45));
   const s1 = scatter();
   const t1 = toArrays(textPos('Happy\n18th\nBirthday', 0.14, true));
   const s2 = scatter();
