@@ -246,23 +246,23 @@ function build() {
   const fin = toArrays(textPos('Now look\nin front\nof you', 0.11, true));
 
   keyframes = [
-    { t: 0.000, ...scatter() },
-    { t: 0.060, ...heart },       // heart forms (long transition)
-    { t: 0.150, ...heart },       // heart holds
-    { t: 0.200, ...s1 },          // scatter (long transition)
-    { t: 0.260, ...t1 },          // text 1 forms
-    { t: 0.370, ...t1 },          // text 1 holds
-    { t: 0.420, ...s2 },          // scatter
-    { t: 0.480, ...t2 },          // text 2 forms
-    { t: 0.580, ...t2 },          // text 2 holds
-    { t: 0.630, ...s3 },          // scatter
-    { t: 0.690, ...cat },         // cat forms
-    { t: 0.750, ...cat },         // cat holds
-    { t: 0.800, ...s4 },          // scatter
-    { t: 0.850, ...t3 },          // trick text forms
-    { t: 0.880, ...t3 },          // trick hold (locked here)
-    { t: 0.940, ...fin },         // final forms
-    { t: 1.000, ...fin },         // final hold
+    { t: 0.000, text: false, ...scatter() },
+    { t: 0.060, text: false, ...heart },
+    { t: 0.150, text: false, ...heart },
+    { t: 0.200, text: false, ...s1 },
+    { t: 0.260, text: true,  ...t1 },
+    { t: 0.370, text: true,  ...t1 },
+    { t: 0.420, text: false, ...s2 },
+    { t: 0.480, text: true,  ...t2 },
+    { t: 0.580, text: true,  ...t2 },
+    { t: 0.630, text: false, ...s3 },
+    { t: 0.690, text: false, ...cat },
+    { t: 0.750, text: false, ...cat },
+    { t: 0.800, text: false, ...s4 },
+    { t: 0.850, text: true,  ...t3 },
+    { t: 0.880, text: true,  ...t3 },
+    { t: 0.940, text: true,  ...fin },
+    { t: 1.000, text: true,  ...fin },
   ];
 }
 
@@ -299,6 +299,7 @@ window.addEventListener('scroll', function() {
 
 window.addEventListener('resize', () => {
   resize();
+  initBgParticles();
   build();
 });
 
@@ -330,6 +331,27 @@ btn.addEventListener('pointerdown', function(e) {
   btn.style.left = (m + Math.random() * (W - m*2)) + 'px';
   btn.style.top = (m + Math.random() * (H - m*2)) + 'px';
 });
+
+// -- Background ambient particles --
+const BG_N = 120;
+const bgX = new Float32Array(BG_N);
+const bgY = new Float32Array(BG_N);
+const bgPhase = new Float32Array(BG_N);
+const bgSize = new Float32Array(BG_N);
+const bgOpacity = new Float32Array(BG_N);
+const bgColor = new Uint8Array(BG_N * 3);
+function initBgParticles() {
+  for (let i = 0; i < BG_N; i++) {
+    bgX[i] = Math.random() * W;
+    bgY[i] = Math.random() * H;
+    bgPhase[i] = Math.random() * Math.PI * 2;
+    bgSize[i] = 0.8 + Math.random() * 1.2;
+    bgOpacity[i] = 0.08 + Math.random() * 0.18;
+    const c = randomPink();
+    bgColor[i*3] = c[0]; bgColor[i*3+1] = c[1]; bgColor[i*3+2] = c[2];
+  }
+}
+initBgParticles();
 
 let bursts = [];
 function spawnBurst(bx, by) {
@@ -399,17 +421,32 @@ function render() {
   let segLen = kfB.t - kfA.t;
   if (segLen <= 0) segLen = 1;
 
-  // -- Render particles --
-  ctx.clearRect(0, 0, W, H);
+  // -- Determine if current scene is text (reduce drift) --
+  const isText = kfA.text && kfB.text;
+  const driftScale = isText ? 0.08 : 1.0;
 
+  // -- Render background ambient particles --
+  ctx.clearRect(0, 0, W, H);
+  ctx.shadowColor = 'rgba(255,120,160,0.3)';
+  ctx.shadowBlur = 8;
+  for (let i = 0; i < BG_N; i++) {
+    const p = bgPhase[i];
+    const bx = bgX[i] + Math.sin(time * 0.2 + p) * 60 + Math.sin(time * 0.7 + p * 3) * 30 + Math.sin(time * 0.05 + p * 0.3) * 100;
+    const by = bgY[i] + Math.cos(time * 0.15 + p * 1.5) * 60 + Math.cos(time * 0.6 + p * 2) * 30 + Math.cos(time * 0.04 + p * 0.7) * 100;
+    ctx.globalAlpha = bgOpacity[i];
+    const ci = i * 3;
+    ctx.fillStyle = `rgb(${bgColor[ci]},${bgColor[ci+1]},${bgColor[ci+2]})`;
+    ctx.beginPath();
+    ctx.arc(((bx % W) + W) % W, ((by % H) + H) % H, bgSize[i], 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // -- Render main particles --
   ctx.shadowColor = 'rgba(255,120,160,0.6)';
   ctx.shadowBlur = 6;
 
   for (let i = 0; i < N; i++) {
-    // Per-particle staggered progress
     let localT = (t - kfA.t) / segLen;
-    // Apply per-particle delay: shift the progress curve
-    // Particles with higher delay start moving later in the segment
     localT = (localT - pDelay[i]) / (1 - pDelay[i]);
     localT = Math.max(0, Math.min(1, localT));
 
@@ -425,8 +462,9 @@ function render() {
 
     const drift = pDriftPhase[i];
     const sp = pSize[i] * 0.5 + 0.5;
-    x += Math.sin(time * 0.3 + drift) * 25 * sp + Math.sin(time * 0.8 + drift * 2.7) * 10 * sp + Math.sin(time * 0.1 + drift * 0.5) * 35 * sp;
-    y += Math.cos(time * 0.25 + drift * 1.4) * 25 * sp + Math.cos(time * 0.7 + drift * 0.8) * 10 * sp + Math.cos(time * 0.08 + drift * 1.8) * 35 * sp;
+    const ds = driftScale * sp;
+    x += Math.sin(time * 0.3 + drift) * 25 * ds + Math.sin(time * 0.8 + drift * 2.7) * 10 * ds + Math.sin(time * 0.1 + drift * 0.5) * 35 * ds;
+    y += Math.cos(time * 0.25 + drift * 1.4) * 25 * ds + Math.cos(time * 0.7 + drift * 0.8) * 10 * ds + Math.cos(time * 0.08 + drift * 1.8) * 35 * ds;
 
     ctx.globalAlpha = pOpacity[i];
     const ci = i * 3;
