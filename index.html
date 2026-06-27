@@ -146,7 +146,8 @@ function heartPos(sf) {
   off.width = W; off.height = H;
   const c = off.getContext('2d');
   const s = BASE * sf;
-  c.fillStyle = 'white';
+  c.strokeStyle = 'white';
+  c.lineWidth = BASE * 0.025;
   c.beginPath();
   c.moveTo(CX, CY - s * 0.35);
   c.bezierCurveTo(CX + s * 0.02, CY - s * 0.6, CX + s * 0.55, CY - s * 0.6, CX + s * 0.55, CY - s * 0.2);
@@ -154,7 +155,7 @@ function heartPos(sf) {
   c.bezierCurveTo(CX - s * 0.25, CY + s * 0.35, CX - s * 0.55, CY + s * 0.05, CX - s * 0.55, CY - s * 0.2);
   c.bezierCurveTo(CX - s * 0.55, CY - s * 0.6, CX - s * 0.02, CY - s * 0.6, CX, CY - s * 0.35);
   c.closePath();
-  c.fill();
+  c.stroke();
   return sampleCanvas(off);
 }
 
