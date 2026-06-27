@@ -427,6 +427,11 @@ function render() {
   rawLocalT = Math.max(0, Math.min(1, rawLocalT));
   const driftScale = kfA.drift + (kfB.drift - kfA.drift) * rawLocalT;
 
+  // -- Unified shape float (whole shape moves as one) --
+  const shapeDrift = 1 - driftScale; // 1 when shape is formed, 0 when scattered
+  const shapeX = (Math.sin(time * 0.4) * 8 + Math.sin(time * 0.15) * 15) * shapeDrift;
+  const shapeY = (Math.cos(time * 0.3) * 8 + Math.cos(time * 0.12) * 15) * shapeDrift;
+
   // -- Render background ambient particles --
   ctx.clearRect(0, 0, W, H);
   ctx.shadowColor = 'rgba(255,120,160,0.3)';
@@ -459,8 +464,8 @@ function render() {
     const bx = kfB.px[i];
     const by = kfB.py[i];
 
-    let x = ax + (bx - ax) * ease;
-    let y = ay + (by - ay) * ease;
+    let x = ax + (bx - ax) * ease + shapeX;
+    let y = ay + (by - ay) * ease + shapeY;
 
     const drift = pDriftPhase[i];
     const sp = pSize[i] * 0.5 + 0.5;
