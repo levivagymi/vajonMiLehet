@@ -359,7 +359,15 @@ window.addEventListener('scroll', function() {
     return;
   }
   const maxScroll = document.body.scrollHeight - window.innerHeight;
-  rawScroll = Math.min(1, window.scrollY / maxScroll);
+  let s = Math.min(1, window.scrollY / maxScroll);
+  if (!trickComplete && s > 0.805) {
+    s = 0.805;
+    const clampY = Math.floor(0.805 * maxScroll);
+    window.scrollTo(0, clampY);
+    scrollLocked = true;
+    lockScrollY = clampY;
+  }
+  rawScroll = s;
 }, { passive: true });
 
 window.addEventListener('resize', () => {
@@ -465,11 +473,7 @@ function render() {
   // -- UI state --
   hint.style.opacity = t > 0.015 ? '0' : '1';
 
-  if (t >= 0.810 && !trickComplete && !scrollLocked && !trickActive) {
-    scrollLocked = true;
-    lockScrollY = window.scrollY;
-  }
-  if (t >= 0.835 && !trickComplete && !trickActive) {
+  if (t >= 0.805 && !trickComplete && !trickActive) {
     trickActive = true;
     trickTaps = 0;
     btn.style.display = 'block';
