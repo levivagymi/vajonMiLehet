@@ -164,25 +164,24 @@ function catPos() {
   off.width = W; off.height = H;
   const c = off.getContext('2d');
   const s = BASE * 0.35;
-  c.fillStyle='#ffaacc';
-  c.beginPath(); c.arc(CX,CY,s*0.5,0,Math.PI*2); c.fill();
-  c.fillStyle='#ff88aa';
-  c.beginPath(); c.moveTo(CX-s*0.4,CY-s*0.35); c.lineTo(CX-s*0.15,CY-s*0.7); c.lineTo(CX,CY-s*0.35); c.fill();
-  c.beginPath(); c.moveTo(CX,CY-s*0.35); c.lineTo(CX+s*0.15,CY-s*0.7); c.lineTo(CX+s*0.4,CY-s*0.35); c.fill();
-  c.fillStyle='#fff';
-  c.beginPath(); c.arc(CX-s*0.15,CY-s*0.05,s*0.08,0,Math.PI*2); c.fill();
-  c.beginPath(); c.arc(CX+s*0.15,CY-s*0.05,s*0.08,0,Math.PI*2); c.fill();
-  c.fillStyle='#331122';
-  c.beginPath(); c.arc(CX-s*0.15,CY-s*0.05,s*0.04,0,Math.PI*2); c.fill();
-  c.beginPath(); c.arc(CX+s*0.15,CY-s*0.05,s*0.04,0,Math.PI*2); c.fill();
-  c.fillStyle='#ff6699';
-  c.beginPath(); c.moveTo(CX,CY+s*0.08); c.lineTo(CX-s*0.04,CY+s*0.14); c.lineTo(CX+s*0.04,CY+s*0.14); c.fill();
-  c.strokeStyle='#ff99bb'; c.lineWidth=2;
-  c.beginPath(); c.arc(CX-s*0.05,CY+s*0.2,s*0.06,Math.PI*1.2,Math.PI*1.8); c.stroke();
-  c.beginPath(); c.arc(CX+s*0.05,CY+s*0.2,s*0.06,Math.PI*1.2,Math.PI*1.8); c.stroke();
-  c.strokeStyle='#ffbbdd'; c.lineWidth=1.5;
+  const lw = BASE * 0.012;
+  c.strokeStyle = 'white'; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
+  // head outline
+  c.beginPath(); c.arc(CX, CY, s*0.5, 0, Math.PI*2); c.stroke();
+  // ears
+  c.beginPath(); c.moveTo(CX-s*0.4,CY-s*0.35); c.lineTo(CX-s*0.15,CY-s*0.7); c.lineTo(CX,CY-s*0.35); c.stroke();
+  c.beginPath(); c.moveTo(CX,CY-s*0.35); c.lineTo(CX+s*0.15,CY-s*0.7); c.lineTo(CX+s*0.4,CY-s*0.35); c.stroke();
+  // eyes
+  c.beginPath(); c.arc(CX-s*0.18,CY-s*0.05,s*0.07,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(CX+s*0.18,CY-s*0.05,s*0.07,0,Math.PI*2); c.stroke();
+  // nose
+  c.beginPath(); c.moveTo(CX,CY+s*0.06); c.lineTo(CX-s*0.04,CY+s*0.13); c.lineTo(CX+s*0.04,CY+s*0.13); c.closePath(); c.stroke();
+  // mouth
+  c.beginPath(); c.arc(CX-s*0.05,CY+s*0.2,s*0.07,Math.PI*1.2,Math.PI*1.8); c.stroke();
+  c.beginPath(); c.arc(CX+s*0.05,CY+s*0.2,s*0.07,Math.PI*1.2,Math.PI*1.8); c.stroke();
+  // whiskers
   [[-1,1],[1,1],[-1,0],[1,0],[-1,-1],[1,-1]].forEach(([dx,dy]) => {
-    c.beginPath(); c.moveTo(CX+dx*s*0.1,CY+s*0.12); c.lineTo(CX+dx*s*0.45,CY+s*0.1+dy*s*0.05); c.stroke();
+    c.beginPath(); c.moveTo(CX+dx*s*0.12,CY+s*0.12); c.lineTo(CX+dx*s*0.5,CY+s*0.1+dy*s*0.06); c.stroke();
   });
   return sampleCanvas(off);
 }
