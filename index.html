@@ -83,20 +83,27 @@ const PINKS = [
 ];
 function randomPink() { return PINKS[Math.floor(Math.random() * PINKS.length)]; }
 
-// Pre-render glow sprites per color for performance
-const glowSprites = PINKS.map(([r,g,b]) => {
-  const s = 16;
+function makeSprite(r,g,b,sharp) {
+  const s = sharp ? 8 : 16;
   const c = document.createElement('canvas');
   c.width = s; c.height = s;
   const x = c.getContext('2d');
   const grad = x.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
-  grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
-  grad.addColorStop(0.4, `rgba(${r},${g},${b},0.6)`);
-  grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  if (sharp) {
+    grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
+    grad.addColorStop(0.7, `rgba(${r},${g},${b},0.8)`);
+    grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  } else {
+    grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
+    grad.addColorStop(0.4, `rgba(${r},${g},${b},0.6)`);
+    grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  }
   x.fillStyle = grad;
   x.fillRect(0,0,s,s);
   return c;
-});
+}
+const glowSprites = PINKS.map(([r,g,b]) => makeSprite(r,g,b,false));
+const sharpSprites = PINKS.map(([r,g,b]) => makeSprite(r,g,b,true));
 
 const N = 1500;
 
@@ -494,6 +501,9 @@ function render() {
   const c3 = Math.cos(time * 0.08) * 35 * driftScale;
   const baseLocalT = (t - kfA.t) / segLen;
   const apx = kfA.px, apy = kfA.py, bpx = kfB.px, bpy = kfB.py;
+  const useSharp = driftScale < 0.3;
+  const sprites = useSharp ? sharpSprites : glowSprites;
+  const spriteScale = useSharp ? 3.5 : 6;
 
   // -- Render main particles --
   for (let i = 0; i < N; i++) {
@@ -509,8 +519,8 @@ function render() {
     y += Math.cos(d * 1.4) * c1 + Math.cos(d * 0.8) * c2 + Math.cos(d * 1.8) * c3;
 
     ctx.globalAlpha = pOpacity[i];
-    const sz = pSize[i] * 6;
-    ctx.drawImage(glowSprites[pColorIdx[i]], x - sz/2, y - sz/2, sz, sz);
+    const sz = pSize[i] * spriteScale;
+    ctx.drawImage(sprites[pColorIdx[i]], x - sz/2, y - sz/2, sz, sz);
   }
 
   // -- Bursts --
