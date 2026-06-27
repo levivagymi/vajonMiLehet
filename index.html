@@ -424,8 +424,9 @@ function render() {
     let y = ay + (by - ay) * ease;
 
     const drift = pDriftPhase[i];
-    x += Math.sin(time * 0.4 + drift) * 8 + Math.sin(time * 1.1 + drift * 2.7) * 4 + Math.sin(time * 0.15 + drift * 0.5) * 12;
-    y += Math.cos(time * 0.35 + drift * 1.4) * 8 + Math.cos(time * 0.9 + drift * 0.8) * 4 + Math.cos(time * 0.12 + drift * 1.8) * 12;
+    const sp = pSize[i] * 0.5 + 0.5;
+    x += Math.sin(time * 0.3 + drift) * 25 * sp + Math.sin(time * 0.8 + drift * 2.7) * 10 * sp + Math.sin(time * 0.1 + drift * 0.5) * 35 * sp;
+    y += Math.cos(time * 0.25 + drift * 1.4) * 25 * sp + Math.cos(time * 0.7 + drift * 0.8) * 10 * sp + Math.cos(time * 0.08 + drift * 1.8) * 35 * sp;
 
     ctx.globalAlpha = pOpacity[i];
     const ci = i * 3;
