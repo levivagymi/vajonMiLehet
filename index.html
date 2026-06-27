@@ -489,9 +489,12 @@ function render() {
   rawLocalT = Math.max(0, Math.min(1, rawLocalT));
   const driftScale = kfA.drift + (kfB.drift - kfA.drift) * rawLocalT;
 
-  // -- Device tilt always active --
-  smoothTiltX += (tiltX - smoothTiltX) * 0.08;
-  smoothTiltY += (tiltY - smoothTiltY) * 0.08;
+  // -- Device tilt only while scrolling --
+  const isScrolling = Math.abs(rawScroll - smoothScroll) > 0.0005;
+  const targetTiltX = isScrolling ? tiltX : 0;
+  const targetTiltY = isScrolling ? tiltY : 0;
+  smoothTiltX += (targetTiltX - smoothTiltX) * 0.08;
+  smoothTiltY += (targetTiltY - smoothTiltY) * 0.08;
   const shapeX = smoothTiltX * 80;
   const shapeY = smoothTiltY * 50;
 
