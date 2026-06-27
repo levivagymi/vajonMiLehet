@@ -156,11 +156,11 @@ function heartPos(sf) {
   c.bezierCurveTo(CX - s * 0.55, CY - s * 0.6, CX - s * 0.02, CY - s * 0.6, CX, CY - s * 0.35);
   c.closePath();
   c.stroke();
-  c.font = '' + (s * 0.22) + 'px sans-serif';
+  c.font = '100 ' + (s * 0.35) + 'px sans-serif';
   c.textAlign = 'center';
   c.textBaseline = 'middle';
-  c.lineWidth = BASE * 0.005;
-  c.strokeText('Léna', CX, CY + s * 0.1);
+  c.lineWidth = BASE * 0.008;
+  c.strokeText('Léna', CX, CY - s * 0.05);
   return sampleCanvas(off);
 }
 
