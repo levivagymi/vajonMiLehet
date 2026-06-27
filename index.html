@@ -429,8 +429,8 @@ function render() {
 
   // -- Unified shape float (whole shape moves as one) --
   const shapeDrift = 1 - driftScale; // 1 when shape is formed, 0 when scattered
-  const shapeX = (Math.sin(time * 0.4) * 8 + Math.sin(time * 0.15) * 15) * shapeDrift;
-  const shapeY = (Math.cos(time * 0.3) * 8 + Math.cos(time * 0.12) * 15) * shapeDrift;
+  const shapeX = (Math.sin(time * 0.35) * 25 + Math.sin(time * 0.12) * 45 + Math.sin(time * 0.6) * 12) * shapeDrift;
+  const shapeY = (Math.cos(time * 0.25) * 25 + Math.cos(time * 0.09) * 45 + Math.cos(time * 0.5) * 12) * shapeDrift;
 
   // -- Render background ambient particles --
   ctx.clearRect(0, 0, W, H);
