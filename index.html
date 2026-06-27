@@ -16,7 +16,7 @@ canvas {
   position: fixed; top: 0; left: 0;
   width: 100vw; height: 100vh; z-index: 1;
 }
-.scroll-container { height: 800vh; position: relative; z-index: 0; }
+.scroll-container { height: 900vh; position: relative; z-index: 0; }
 #trickBtn {
   position: fixed; z-index: 10; padding: 14px 28px;
   background: rgba(255,100,150,0.15);
@@ -28,10 +28,6 @@ canvas {
   touch-action: manipulation; user-select: none;
   box-shadow: 0 0 20px rgba(255,100,150,0.2), inset 0 0 20px rgba(255,100,150,0.05);
   letter-spacing: 0.5px;
-  transition: box-shadow 0.3s;
-}
-#trickBtn:active {
-  box-shadow: 0 0 30px rgba(255,100,150,0.4), inset 0 0 20px rgba(255,100,150,0.1);
 }
 #tapCounter {
   position: fixed; z-index: 10; color: rgba(255,180,200,0.8);
@@ -76,7 +72,6 @@ function resize() {
   canvas.style.width = W + 'px';
   canvas.style.height = H + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  rebuildSceneCache();
 }
 
 const PINKS = [
@@ -85,24 +80,7 @@ const PINKS = [
 ];
 function randomPink() { return PINKS[Math.floor(Math.random() * PINKS.length)]; }
 
-const PARTICLE_COUNT = 4000;
-const particles = [];
-
-function initParticles() {
-  particles.length = 0;
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const c = randomPink();
-    particles.push({
-      x: CX + (Math.random() - 0.5) * BASE,
-      y: CY + (Math.random() - 0.5) * BASE,
-      tx: CX, ty: CY,
-      size: 1.8 + Math.random() * 1.2,
-      opacity: 0.5 + Math.random() * 0.5,
-      r: c[0], g: c[1], b: c[2],
-      drift: Math.random() * Math.PI * 2
-    });
-  }
-}
+const N = 4000;
 
 function sampleCanvas(off, colorful) {
   const c = off.getContext('2d');
@@ -122,56 +100,56 @@ function sampleCanvas(off, colorful) {
   return positions;
 }
 
-function getTextPositions(text, fontSizeRatio, multiline) {
-  const fontSize = Math.round(BASE * fontSizeRatio);
+function getTextPos(text, ratio, multiline) {
+  const fs = Math.round(BASE * ratio);
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const c = off.getContext('2d');
   c.fillStyle = 'white';
-  c.font = `bold ${fontSize}px Georgia, serif`;
+  c.font = `bold ${fs}px Georgia, serif`;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   if (multiline) {
     const lines = text.split('\n');
-    const lh = fontSize * 1.3;
-    const startY = CY - (lines.length - 1) * lh / 2;
-    lines.forEach((line, i) => c.fillText(line, CX, startY + i * lh));
+    const lh = fs * 1.3;
+    const sy = CY - (lines.length - 1) * lh / 2;
+    lines.forEach((l, i) => c.fillText(l, CX, sy + i * lh));
   } else {
     c.fillText(text, CX, CY);
   }
   return sampleCanvas(off);
 }
 
-function getHeartPositions(scaleFactor) {
-  const scale = BASE * scaleFactor;
-  const positions = [];
-  for (let t = 0; t < Math.PI * 2; t += 0.03) {
+function getHeartPos(sf) {
+  const scale = BASE * sf;
+  const pos = [];
+  for (let t = 0; t < Math.PI*2; t += 0.03) {
     for (let r = 0; r < 1; r += 0.025) {
       const hx = 16 * Math.pow(Math.sin(t), 3);
-      const hy = -(13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t));
-      positions.push({ x: CX + hx*scale/17*r, y: CY + hy*scale/17*r });
+      const hy = -(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+      pos.push({ x: CX + hx*scale/17*r, y: CY + hy*scale/17*r });
     }
   }
-  return positions;
+  return pos;
 }
 
-function getCatPositions() {
+function getCatPos() {
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const c = off.getContext('2d');
   const s = BASE * 0.35;
-  c.fillStyle = '#ffaacc';
-  c.beginPath(); c.arc(CX, CY, s*0.5, 0, Math.PI*2); c.fill();
-  c.fillStyle = '#ff88aa';
+  c.fillStyle='#ffaacc';
+  c.beginPath(); c.arc(CX,CY,s*0.5,0,Math.PI*2); c.fill();
+  c.fillStyle='#ff88aa';
   c.beginPath(); c.moveTo(CX-s*0.4,CY-s*0.35); c.lineTo(CX-s*0.15,CY-s*0.7); c.lineTo(CX,CY-s*0.35); c.fill();
   c.beginPath(); c.moveTo(CX,CY-s*0.35); c.lineTo(CX+s*0.15,CY-s*0.7); c.lineTo(CX+s*0.4,CY-s*0.35); c.fill();
-  c.fillStyle = '#fff';
+  c.fillStyle='#fff';
   c.beginPath(); c.arc(CX-s*0.15,CY-s*0.05,s*0.08,0,Math.PI*2); c.fill();
   c.beginPath(); c.arc(CX+s*0.15,CY-s*0.05,s*0.08,0,Math.PI*2); c.fill();
-  c.fillStyle = '#331122';
+  c.fillStyle='#331122';
   c.beginPath(); c.arc(CX-s*0.15,CY-s*0.05,s*0.04,0,Math.PI*2); c.fill();
   c.beginPath(); c.arc(CX+s*0.15,CY-s*0.05,s*0.04,0,Math.PI*2); c.fill();
-  c.fillStyle = '#ff6699';
+  c.fillStyle='#ff6699';
   c.beginPath(); c.moveTo(CX,CY+s*0.08); c.lineTo(CX-s*0.04,CY+s*0.14); c.lineTo(CX+s*0.04,CY+s*0.14); c.fill();
   c.strokeStyle='#ff99bb'; c.lineWidth=2;
   c.beginPath(); c.arc(CX-s*0.05,CY+s*0.2,s*0.06,Math.PI*1.2,Math.PI*1.8); c.stroke();
@@ -190,89 +168,97 @@ catImg.onload = function() {
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const c = off.getContext('2d');
-  const aspect = catImg.width / catImg.height;
-  const drawH = BASE * 0.65;
-  const drawW = drawH * aspect;
-  c.drawImage(catImg, (W-drawW)/2, (H-drawH)/2, drawW, drawH);
+  const a = catImg.width / catImg.height;
+  const dH = BASE * 0.65, dW = dH * a;
+  c.drawImage(catImg, (W-dW)/2, (H-dH)/2, dW, dH);
   catImagePositions = sampleCanvas(off, true);
-  rebuildSceneCache();
+  buildKeyframes();
 };
 catImg.src = 'cat.jpg';
 
-let sceneCache = [];
+// Each particle stores positions at each keyframe
+// Scroll interpolates between keyframes
+let keyframes = []; // array of { t, positions[N] }
+let particleColors = []; // [N] arrays of {r,g,b} per keyframe
+let particleSizes = [];
+let particleOpacities = [];
 
-function generateScatterPositions() {
-  const positions = [];
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const dist = BASE * 0.3 + Math.random() * BASE * 0.35;
-    positions.push({ x: CX + Math.cos(angle) * dist, y: CY + Math.sin(angle) * dist });
+function randomScatter() {
+  const pos = [];
+  for (let i = 0; i < N; i++) {
+    pos.push({
+      x: Math.random() * W,
+      y: Math.random() * H
+    });
   }
-  return positions;
+  return pos;
 }
 
-function rebuildSceneCache() {
-  if (!W) return;
-  const heart = getHeartPositions(0.55);
-  const text1 = getTextPositions('Happy\n18th\nBirthday', 0.14, true);
-  const text2 = getTextPositions('I Love\nYou', 0.2, true);
-  const cat = catImagePositions || getCatPositions();
-  const text3 = getTextPositions('What do you think\nyour gift is?', 0.07, true);
-  const text4 = getTextPositions('Now look\nin front\nof you', 0.11, true);
+function expandToN(positions) {
+  const result = [];
+  const len = positions.length;
+  for (let i = 0; i < N; i++) {
+    const p = positions[i % len];
+    result.push({ x: p.x, y: p.y, r: p.r, g: p.g, b: p.b });
+  }
+  return result;
+}
 
-  sceneCache = [
-    { positions: heart },
-    { positions: generateScatterPositions(), isScatter: true },
-    { positions: text1 },
-    { positions: generateScatterPositions(), isScatter: true },
-    { positions: text2 },
-    { positions: generateScatterPositions(), isScatter: true },
-    { positions: cat },
-    { positions: generateScatterPositions(), isScatter: true },
-    { positions: text3 },
-    // scene 8 = trick button, after that:
-    { positions: text4 },
+function buildKeyframes() {
+  const heart = expandToN(getHeartPos(0.55));
+  const scatter1 = expandToN(randomScatter());
+  const text1 = expandToN(getTextPos('Happy\n18th\nBirthday', 0.14, true));
+  const scatter2 = expandToN(randomScatter());
+  const text2 = expandToN(getTextPos('I Love\nYou', 0.2, true));
+  const scatter3 = expandToN(randomScatter());
+  const cat = expandToN(catImagePositions || getCatPos());
+  const scatter4 = expandToN(randomScatter());
+  const text3 = expandToN(getTextPos('What do you think\nyour gift is?', 0.07, true));
+  const final = expandToN(getTextPos('Now look\nin front\nof you', 0.11, true));
+
+  // t values: where each keyframe sits on 0-1 scroll
+  keyframes = [
+    { t: 0.00, data: expandToN(randomScatter()) }, // start scattered
+    { t: 0.03, data: heart },        // heart formed
+    { t: 0.12, data: heart },        // heart hold
+    { t: 0.17, data: scatter1 },     // scatter
+    { t: 0.22, data: text1 },        // happy 18th formed
+    { t: 0.32, data: text1 },        // hold
+    { t: 0.37, data: scatter2 },     // scatter
+    { t: 0.42, data: text2 },        // i love you formed
+    { t: 0.50, data: text2 },        // hold
+    { t: 0.55, data: scatter3 },     // scatter
+    { t: 0.60, data: cat },          // cat formed
+    { t: 0.68, data: cat },          // hold
+    { t: 0.73, data: scatter4 },     // scatter
+    { t: 0.78, data: text3 },        // trick text formed
+    { t: 0.84, data: text3 },        // hold (scroll locked here)
+    { t: 0.90, data: final },        // final formed
+    { t: 1.00, data: final },        // final hold
   ];
+
+  // generate per-particle colors and sizes once
+  particleColors.length = 0;
+  particleSizes.length = 0;
+  particleOpacities.length = 0;
+  for (let i = 0; i < N; i++) {
+    const c = randomPink();
+    particleColors.push(c);
+    particleSizes.push(1.8 + Math.random() * 1.2);
+    particleOpacities.push(0.5 + Math.random() * 0.5);
+  }
 }
 
 resize();
-initParticles();
-
-// Timeline: each scene gets a segment of scroll
-// 0.00-0.10 heart form
-// 0.10-0.14 heart → scatter
-// 0.14-0.24 text1 form
-// 0.24-0.28 text1 → scatter
-// 0.28-0.38 text2 form
-// 0.38-0.42 text2 → scatter
-// 0.42-0.52 cat form
-// 0.52-0.56 cat → scatter
-// 0.56-0.66 trick text form + button
-// 0.66-1.00 final text (after trick complete)
-
-const TIMELINE = [
-  { start: 0.00, end: 0.10, scene: 0 },        // heart
-  { start: 0.10, end: 0.15, scene: 1, trans: true }, // scatter
-  { start: 0.15, end: 0.25, scene: 2 },        // happy 18th
-  { start: 0.25, end: 0.30, scene: 3, trans: true }, // scatter
-  { start: 0.30, end: 0.40, scene: 4 },        // i love you
-  { start: 0.40, end: 0.45, scene: 5, trans: true }, // scatter
-  { start: 0.45, end: 0.55, scene: 6 },        // cat
-  { start: 0.55, end: 0.60, scene: 7, trans: true }, // scatter
-  { start: 0.60, end: 0.72, scene: 8 },        // trick text + button
-  { start: 0.72, end: 1.00, scene: 9 },        // final
-];
+buildKeyframes();
 
 let scrollProgress = 0;
 let trickTaps = 0;
 let trickActive = false;
 let trickComplete = false;
-let finalRevealed = false;
 let scrollLocked = false;
 let lockScrollY = 0;
-let currentTargets = null;
-let lastTimelineIdx = -1;
-let time = 0;
+let finalRevealed = false;
 const btn = document.getElementById('trickBtn');
 const counter = document.getElementById('tapCounter');
 const hint = document.getElementById('sceneHint');
@@ -286,87 +272,10 @@ window.addEventListener('scroll', function() {
   scrollProgress = Math.min(1, window.scrollY / maxScroll);
 });
 
-function getTimelineSegment(p) {
-  for (let i = TIMELINE.length - 1; i >= 0; i--) {
-    if (p >= TIMELINE[i].start) return i;
-  }
-  return 0;
-}
-
-function applyTargets(sceneIdx) {
-  if (sceneIdx < 0 || sceneIdx >= sceneCache.length) return;
-  const sc = sceneCache[sceneIdx];
-  const positions = sc.positions;
-  const len = positions.length;
-  if (len === 0) return;
-
-  if (sc.isScatter) {
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const pos = positions[i % len];
-      particles[i].tx = pos.x;
-      particles[i].ty = pos.y;
-    }
-  } else {
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const pos = positions[i % len];
-      particles[i].tx = pos.x;
-      particles[i].ty = pos.y;
-      if (pos.r !== undefined) {
-        particles[i].r = pos.r; particles[i].g = pos.g; particles[i].b = pos.b;
-      } else {
-        const c = randomPink();
-        particles[i].r = c[0]; particles[i].g = c[1]; particles[i].b = c[2];
-      }
-    }
-  }
-}
-
-function updateTimeline() {
-  time += 0.016;
-  const p = scrollProgress;
-
-  if (p > 0.03) {
-    hint.style.opacity = '0';
-  } else {
-    hint.style.opacity = '';
-  }
-
-  const idx = getTimelineSegment(p);
-  const seg = TIMELINE[idx];
-
-  // Heart pulse in scene 0
-  if (seg.scene === 0 && sceneCache[0]) {
-    const pulse = 1 + 0.06 * Math.sin(time * 2.5);
-    const positions = getHeartPositions(0.55 * pulse);
-    const len = positions.length;
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const pos = positions[i % len];
-      particles[i].tx = pos.x;
-      particles[i].ty = pos.y;
-    }
-  } else if (idx !== lastTimelineIdx) {
-    lastTimelineIdx = idx;
-
-    if (seg.scene === 8 && !trickComplete) {
-      applyTargets(seg.scene);
-      trickActive = true;
-      trickTaps = 0;
-      scrollLocked = true;
-      lockScrollY = window.scrollY;
-      btn.style.display = 'block';
-      btn.style.left = '50%';
-      btn.style.top = '72%';
-      counter.style.display = 'none';
-    } else if (seg.scene === 9) {
-      applyTargets(seg.scene);
-      finalRevealed = true;
-      btn.style.display = 'none';
-    } else {
-      btn.style.display = 'none';
-      applyTargets(seg.scene);
-    }
-  }
-}
+window.addEventListener('resize', () => {
+  resize();
+  buildKeyframes();
+});
 
 btn.addEventListener('pointerdown', function(e) {
   e.preventDefault();
@@ -383,7 +292,6 @@ btn.addEventListener('pointerdown', function(e) {
     counter.style.display = 'none';
     scrollLocked = false;
     finalRevealed = true;
-    applyTargets(9);
     return;
   }
 
@@ -393,9 +301,9 @@ btn.addEventListener('pointerdown', function(e) {
   counter.style.top = (e.clientY - 30) + 'px';
   setTimeout(() => counter.style.display = 'none', 600);
 
-  const margin = 70;
-  btn.style.left = (margin + Math.random() * (W - margin * 2)) + 'px';
-  btn.style.top = (margin + Math.random() * (H - margin * 2)) + 'px';
+  const m = 70;
+  btn.style.left = (m + Math.random() * (W - m*2)) + 'px';
+  btn.style.top = (m + Math.random() * (H - m*2)) + 'px';
 });
 
 let bursts = [];
@@ -410,34 +318,83 @@ function spawnBurst(bx, by) {
   }
 }
 
-const LERP = 0.025;
+function getInterpolatedPosition(particleIdx, t) {
+  if (keyframes.length < 2) return { x: CX, y: CY };
+
+  // find the two keyframes we're between
+  let a = 0, b = 1;
+  for (let i = keyframes.length - 1; i >= 0; i--) {
+    if (t >= keyframes[i].t) {
+      a = i;
+      b = Math.min(i + 1, keyframes.length - 1);
+      break;
+    }
+  }
+
+  if (a === b) {
+    const d = keyframes[a].data[particleIdx];
+    return { x: d.x, y: d.y };
+  }
+
+  const segStart = keyframes[a].t;
+  const segEnd = keyframes[b].t;
+  const localT = (t - segStart) / (segEnd - segStart);
+  // smooth easing
+  const ease = localT * localT * (3 - 2 * localT);
+
+  const pa = keyframes[a].data[particleIdx];
+  const pb = keyframes[b].data[particleIdx];
+
+  return {
+    x: pa.x + (pb.x - pa.x) * ease,
+    y: pa.y + (pb.y - pa.y) * ease
+  };
+}
 
 function render() {
   ctx.clearRect(0, 0, W, H);
-  updateTimeline();
+
+  let t = scrollProgress;
+
+  // Handle trick button display
+  if (t >= 0.78 && t < 0.85 && !trickComplete) {
+    if (!trickActive) {
+      trickActive = true;
+      trickTaps = 0;
+      scrollLocked = true;
+      lockScrollY = window.scrollY;
+      btn.style.display = 'block';
+      btn.style.left = '50%';
+      btn.style.top = '72%';
+    }
+  } else if (!trickActive) {
+    btn.style.display = 'none';
+  }
+
+  if (trickComplete && t >= 0.85) {
+    finalRevealed = true;
+  }
+
+  hint.style.opacity = t > 0.02 ? '0' : '';
 
   ctx.shadowColor = 'rgba(255,120,160,0.7)';
   ctx.shadowBlur = 8;
 
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const p = particles[i];
-    p.x += (p.tx - p.x) * LERP;
-    p.y += (p.ty - p.y) * LERP;
+  for (let i = 0; i < N; i++) {
+    const pos = getInterpolatedPosition(i, t);
+    const col = particleColors[i];
 
-    const driftX = Math.sin(time * 0.8 + p.drift) * 0.4;
-    const driftY = Math.cos(time * 0.6 + p.drift * 1.3) * 0.4;
-
-    const flicker = 0.88 + 0.12 * Math.sin(time * 2.5 + i * 0.7);
-    ctx.globalAlpha = p.opacity * flicker;
-    ctx.fillStyle = `rgb(${p.r},${p.g},${p.b})`;
+    ctx.globalAlpha = particleOpacities[i];
+    ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
     ctx.beginPath();
-    ctx.arc(p.x + driftX, p.y + driftY, p.size, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, particleSizes[i], 0, Math.PI * 2);
     ctx.fill();
   }
 
   ctx.shadowBlur = 0;
   ctx.shadowColor = 'transparent';
 
+  // bursts
   for (let i = bursts.length - 1; i >= 0; i--) {
     const b = bursts[i];
     b.x += b.vx; b.y += b.vy;
