@@ -17,7 +17,7 @@ canvas {
   width: 100vw; height: 100vh; z-index: 1;
   pointer-events: none;
 }
-.scroll-container { height: 3000vh; position: relative; z-index: 0; }
+.scroll-container { height: 6000vh; position: relative; z-index: 0; }
 #trickBtn {
   position: fixed; z-index: 10; padding: 14px 28px;
   background: rgba(255,100,150,0.12);
@@ -126,12 +126,19 @@ function heartPos(sf) {
   const scale = BASE * sf;
   c.fillStyle = 'white';
   c.beginPath();
+  const pts = [];
   for (let t = 0; t <= Math.PI * 2; t += 0.01) {
     const hx = 16 * Math.pow(Math.sin(t), 3);
-    const hy = -(13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t));
-    const px = CX + hx * scale / 17;
-    const py = CY + hy * scale / 17;
-    if (t === 0) c.moveTo(px, py);
+    const hy = 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
+    pts.push({ x: hx, y: -hy });
+  }
+  let minY = Infinity, maxY = -Infinity;
+  for (const p of pts) { minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
+  const offsetY = (minY + maxY) / 2;
+  for (let i = 0; i < pts.length; i++) {
+    const px = CX + pts[i].x * scale / 17;
+    const py = CY + (pts[i].y - offsetY) * scale / 17;
+    if (i === 0) c.moveTo(px, py);
     else c.lineTo(px, py);
   }
   c.closePath();
@@ -227,7 +234,7 @@ function toArrays(positions) {
 }
 
 function build() {
-  const heart = toArrays(heartPos(0.55));
+  const heart = toArrays(heartPos(0.4));
   const s1 = scatter();
   const t1 = toArrays(textPos('Happy\n18th\nBirthday', 0.14, true));
   const s2 = scatter();
@@ -239,22 +246,22 @@ function build() {
   const fin = toArrays(textPos('Now look\nin front\nof you', 0.11, true));
 
   keyframes = [
-    { t: 0.000, ...scatter() },   // initial random
-    { t: 0.040, ...heart },       // heart slowly forms
-    { t: 0.130, ...heart },       // heart holds long
-    { t: 0.170, ...s1 },          // scatter out slowly
-    { t: 0.220, ...t1 },          // text 1 forms
-    { t: 0.350, ...t1 },          // text 1 holds long
-    { t: 0.390, ...s2 },          // scatter
-    { t: 0.440, ...t2 },          // text 2 forms
-    { t: 0.560, ...t2 },          // text 2 holds long
-    { t: 0.600, ...s3 },          // scatter
-    { t: 0.650, ...cat },         // cat forms
-    { t: 0.730, ...cat },         // cat holds
-    { t: 0.770, ...s4 },          // scatter
-    { t: 0.820, ...t3 },          // trick text forms
-    { t: 0.870, ...t3 },          // trick hold (locked here)
-    { t: 0.930, ...fin },         // final forms slowly
+    { t: 0.000, ...scatter() },
+    { t: 0.060, ...heart },       // heart forms (long transition)
+    { t: 0.150, ...heart },       // heart holds
+    { t: 0.200, ...s1 },          // scatter (long transition)
+    { t: 0.260, ...t1 },          // text 1 forms
+    { t: 0.370, ...t1 },          // text 1 holds
+    { t: 0.420, ...s2 },          // scatter
+    { t: 0.480, ...t2 },          // text 2 forms
+    { t: 0.580, ...t2 },          // text 2 holds
+    { t: 0.630, ...s3 },          // scatter
+    { t: 0.690, ...cat },         // cat forms
+    { t: 0.750, ...cat },         // cat holds
+    { t: 0.800, ...s4 },          // scatter
+    { t: 0.850, ...t3 },          // trick text forms
+    { t: 0.880, ...t3 },          // trick hold (locked here)
+    { t: 0.940, ...fin },         // final forms
     { t: 1.000, ...fin },         // final hold
   ];
 }
@@ -268,7 +275,7 @@ build();
 // lerps toward raw each frame for buttery feel
 let rawScroll = 0;
 let smoothScroll = 0;
-const SCROLL_SMOOTHING = 0.07; // lower = smoother, more cinematic
+const SCROLL_SMOOTHING = 0.045;
 
 let trickTaps = 0;
 let trickActive = false;
@@ -369,7 +376,7 @@ function render() {
   // -- UI state --
   hint.style.opacity = t > 0.015 ? '0' : '1';
 
-  if (t >= 0.82 && t <= 0.88 && !trickComplete && !trickActive) {
+  if (t >= 0.85 && t <= 0.90 && !trickComplete && !trickActive) {
     trickActive = true;
     trickTaps = 0;
     scrollLocked = true;
@@ -381,7 +388,7 @@ function render() {
   if (!trickActive && !trickComplete) {
     btn.style.display = 'none';
   }
-  if (trickComplete && t >= 0.84) finalRevealed = true;
+  if (trickComplete && t >= 0.88) finalRevealed = true;
 
   // -- Find keyframe segment --
   const segIdx = findSegment(t);
