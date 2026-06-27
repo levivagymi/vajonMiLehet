@@ -465,11 +465,13 @@ function render() {
   // -- UI state --
   hint.style.opacity = t > 0.015 ? '0' : '1';
 
+  if (t >= 0.810 && !trickComplete && !scrollLocked && !trickActive) {
+    scrollLocked = true;
+    lockScrollY = window.scrollY;
+  }
   if (t >= 0.835 && !trickComplete && !trickActive) {
     trickActive = true;
     trickTaps = 0;
-    scrollLocked = true;
-    lockScrollY = window.scrollY;
     btn.style.display = 'block';
     btnX = W / 2;
     btnY = H * 0.72;
