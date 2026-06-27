@@ -481,13 +481,11 @@ function render() {
   const driftScale = kfA.drift + (kfB.drift - kfA.drift) * rawLocalT;
 
   // -- Unified shape float (whole shape moves as one) + device tilt --
-  smoothTiltX += (tiltX - smoothTiltX) * 0.08;
-  smoothTiltY += (tiltY - smoothTiltY) * 0.08;
-  const shapeDrift = 1 - driftScale;
-  const tiltOffX = smoothTiltX * 60;
-  const tiltOffY = smoothTiltY * 40;
-  const shapeX = tiltOffX;
-  const shapeY = tiltOffY;
+  const tiltTarget = trickActive ? 1 : 0;
+  smoothTiltX += ((tiltX * tiltTarget) - smoothTiltX) * 0.1;
+  smoothTiltY += ((tiltY * tiltTarget) - smoothTiltY) * 0.1;
+  const shapeX = smoothTiltX * 150;
+  const shapeY = smoothTiltY * 100;
 
   // -- Render background ambient particles --
   ctx.clearRect(0, 0, W, H);
