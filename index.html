@@ -95,7 +95,7 @@ function randomPink() {
   return PINKS[Math.floor(Math.random() * PINKS.length)];
 }
 
-const PARTICLE_COUNT = 3000;
+const PARTICLE_COUNT = 4000;
 const particles = [];
 
 for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -103,13 +103,11 @@ for (let i = 0; i < PARTICLE_COUNT; i++) {
   particles.push({
     x: CX + (Math.random() - 0.5) * BASE * 0.5,
     y: CY + (Math.random() - 0.5) * BASE * 0.5,
-    vx: 0, vy: 0,
     tx: CX + (Math.random() - 0.5) * BASE * 0.3,
     ty: CY + (Math.random() - 0.5) * BASE * 0.3,
-    size: 1.5 + Math.random() * 1.5,
-    opacity: 0.4 + Math.random() * 0.6,
-    r: c[0], g: c[1], b: c[2],
-    baseR: c[0], baseG: c[1], baseB: c[2]
+    size: 1.8 + Math.random() * 1.2,
+    opacity: 0.5 + Math.random() * 0.5,
+    r: c[0], g: c[1], b: c[2]
   });
 }
 
@@ -124,18 +122,15 @@ function setTargets(positions, scatter) {
       p.ty = CY + Math.sin(angle) * dist;
       const c = randomPink();
       p.r = c[0]; p.g = c[1]; p.b = c[2];
-      p.baseR = c[0]; p.baseG = c[1]; p.baseB = c[2];
     } else {
       const pos = positions[i % len];
       p.tx = pos.x;
       p.ty = pos.y;
       if (pos.r !== undefined) {
         p.r = pos.r; p.g = pos.g; p.b = pos.b;
-        p.baseR = pos.r; p.baseG = pos.g; p.baseB = pos.b;
       } else {
         const c = randomPink();
         p.r = c[0]; p.g = c[1]; p.b = c[2];
-        p.baseR = c[0]; p.baseG = c[1]; p.baseB = c[2];
       }
     }
   }
@@ -152,7 +147,7 @@ function getTextPositions(text, fontSizeRatio, multiline) {
   c.textBaseline = 'middle';
   if (multiline) {
     const lines = text.split('\n');
-    const lh = fontSize * 1.4;
+    const lh = fontSize * 1.3;
     const startY = CY - (lines.length - 1) * lh / 2;
     lines.forEach((line, i) => c.fillText(line, CX, startY + i * lh));
   } else {
@@ -165,7 +160,7 @@ function sampleCanvas(off, colorful) {
   const c = off.getContext('2d');
   const pixels = c.getImageData(0, 0, off.width, off.height).data;
   const positions = [];
-  const gap = Math.max(3, Math.round(5 * (BASE / 390)));
+  const gap = Math.max(2, Math.round(3 * (BASE / 390)));
   for (let y = 0; y < off.height; y += gap) {
     for (let x = 0; x < off.width; x += gap) {
       const i = (y * off.width + x) * 4;
@@ -182,9 +177,9 @@ function sampleCanvas(off, colorful) {
 function getHeartPositions(scaleFactor) {
   const scale = BASE * scaleFactor;
   const positions = [];
-  const step = 0.04;
+  const step = 0.03;
   for (let t = 0; t < Math.PI * 2; t += step) {
-    for (let r = 0; r < 1; r += 0.035) {
+    for (let r = 0; r < 1; r += 0.025) {
       const hx = 16 * Math.pow(Math.sin(t), 3);
       const hy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
       positions.push({
@@ -257,7 +252,10 @@ catImg.src = 'cat.jpg';
 let scrollProgress = 0;
 let trickTaps = 0;
 let trickActive = false;
+let trickComplete = false;
 let finalRevealed = false;
+let scrollLocked = false;
+let lockScrollY = 0;
 const btn = document.getElementById('trickBtn');
 const counter = document.getElementById('tapCounter');
 const hint = document.getElementById('sceneHint');
@@ -271,6 +269,15 @@ function getScene() {
   if (p < 0.85) return { id: 4, local: (p - 0.70) / 0.15 };
   return { id: 5, local: (p - 0.85) / 0.15 };
 }
+
+window.addEventListener('scroll', function(e) {
+  if (scrollLocked) {
+    window.scrollTo(0, lockScrollY);
+    return;
+  }
+  const maxScroll = document.body.scrollHeight - window.innerHeight;
+  scrollProgress = Math.min(1, window.scrollY / maxScroll);
+}, { passive: false });
 
 let lastScene = -1;
 let heartPhase = 0;
@@ -291,24 +298,27 @@ function updateScene() {
   if (id !== lastScene) {
     lastScene = id;
     btn.style.display = 'none';
-    trickActive = false;
 
     if (id === 0) {
       setTargets(getHeartPositions(0.55), false);
     } else if (id === 1) {
-      setTargets(getTextPositions('Happy\n18th\nBirthday', 0.12, true), false);
+      setTargets(getTextPositions('Happy\n18th\nBirthday', 0.14, true), false);
     } else if (id === 2) {
-      setTargets(getTextPositions('I Love\nYou', 0.16, true), false);
+      setTargets(getTextPositions('I Love\nYou', 0.2, true), false);
     } else if (id === 3) {
       setTargets(catImagePositions || getCatPositions(), false);
     } else if (id === 4) {
-      setTargets(getTextPositions('What do you think\nyour gift is?', 0.065, true), false);
-      trickActive = true;
-      trickTaps = 0;
-      btn.style.display = 'block';
-      btn.style.left = '50%';
-      btn.style.top = '72%';
-      counter.style.display = 'none';
+      if (!trickComplete) {
+        setTargets(getTextPositions('What do you think\nyour gift is?', 0.07, true), false);
+        trickActive = true;
+        trickTaps = 0;
+        scrollLocked = true;
+        lockScrollY = window.scrollY;
+        btn.style.display = 'block';
+        btn.style.left = '50%';
+        btn.style.top = '72%';
+        counter.style.display = 'none';
+      }
     } else if (id === 5) {
       showFinalScene();
     }
@@ -324,15 +334,6 @@ function updateScene() {
       particles[i].tx = p.x;
       particles[i].ty = p.y;
     }
-    if (local > 0.8) {
-      const t = (local - 0.8) / 0.2;
-      if (t > 0.5) setTargets([], true);
-    }
-  }
-
-  if ((id === 1 || id === 2 || id === 3) && local > 0.8) {
-    const t = (local - 0.8) / 0.2;
-    if (t > 0.5 && !trickActive) setTargets([], true);
   }
 }
 
@@ -340,7 +341,7 @@ function showFinalScene() {
   finalRevealed = true;
   btn.style.display = 'none';
   counter.style.display = 'none';
-  setTargets(getTextPositions('Now look\nin front\nof you', 0.09, true), false);
+  setTargets(getTextPositions('Now look\nin front\nof you', 0.11, true), false);
 }
 
 btn.addEventListener('pointerdown', function(e) {
@@ -353,8 +354,10 @@ btn.addEventListener('pointerdown', function(e) {
 
   if (trickTaps >= 11) {
     trickActive = false;
+    trickComplete = true;
     btn.style.display = 'none';
     counter.style.display = 'none';
+    scrollLocked = false;
     showFinalScene();
     return;
   }
@@ -384,32 +387,22 @@ function spawnBurst(bx, by) {
   }
 }
 
-window.addEventListener('scroll', () => {
-  const maxScroll = document.body.scrollHeight - window.innerHeight;
-  scrollProgress = Math.min(1, window.scrollY / maxScroll);
-}, { passive: true });
+const LERP_SPEED = 0.03;
 
 function render() {
   ctx.clearRect(0, 0, W, H);
 
   updateScene();
 
-  const spring = 0.05;
-  const damping = 0.84;
-
-  ctx.shadowColor = 'rgba(255, 120, 160, 0.8)';
-  ctx.shadowBlur = 6;
+  ctx.shadowColor = 'rgba(255, 120, 160, 0.7)';
+  ctx.shadowBlur = 8;
 
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const p = particles[i];
-    p.vx += (p.tx - p.x) * spring;
-    p.vy += (p.ty - p.y) * spring;
-    p.vx *= damping;
-    p.vy *= damping;
-    p.x += p.vx;
-    p.y += p.vy;
+    p.x += (p.tx - p.x) * LERP_SPEED;
+    p.y += (p.ty - p.y) * LERP_SPEED;
 
-    const flicker = 0.85 + 0.15 * Math.sin(time * 3 + i * 0.5);
+    const flicker = 0.88 + 0.12 * Math.sin(time * 2.5 + i * 0.7);
     ctx.globalAlpha = p.opacity * flicker;
     ctx.fillStyle = `rgb(${p.r},${p.g},${p.b})`;
     ctx.beginPath();
