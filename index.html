@@ -328,6 +328,7 @@ initGyro();
 
 let trickTaps = 0;
 let trickActive = false;
+let btnX = 0, btnY = 0, btnVX = 2.5, btnVY = 1.8;
 let trickComplete = false;
 let scrollLocked = false;
 let lockScrollY = 0;
@@ -376,9 +377,11 @@ btn.addEventListener('pointerdown', function(e) {
   counter.style.top = (e.clientY - 30) + 'px';
   setTimeout(() => counter.style.display = 'none', 500);
 
-  const m = 70;
-  btn.style.left = (m + Math.random() * (W - m*2)) + 'px';
-  btn.style.top = (m + Math.random() * (H - m*2)) + 'px';
+  // Speed up after each tap
+  const speed = 2.5 + trickTaps * 0.5;
+  const angle = Math.random() * Math.PI * 2;
+  btnVX = Math.cos(angle) * speed;
+  btnVY = Math.sin(angle) * speed;
 });
 
 // -- Background ambient particles --
@@ -447,19 +450,33 @@ function render() {
   // -- UI state --
   hint.style.opacity = t > 0.015 ? '0' : '1';
 
-  if (t >= 0.85 && t <= 0.90 && !trickComplete && !trickActive) {
+  if (t >= 0.82 && !trickComplete && !trickActive) {
     trickActive = true;
     trickTaps = 0;
     scrollLocked = true;
     lockScrollY = window.scrollY;
     btn.style.display = 'block';
-    btn.style.left = '50%';
-    btn.style.top = '72%';
+    btnX = W / 2;
+    btnY = H * 0.72;
+    btnVX = 2.5;
+    btnVY = 1.8;
+    btn.style.left = btnX + 'px';
+    btn.style.top = btnY + 'px';
+  }
+  if (trickActive) {
+    const bw = btn.offsetWidth / 2;
+    const bh = btn.offsetHeight / 2;
+    btnX += btnVX;
+    btnY += btnVY;
+    if (btnX - bw <= 0 || btnX + bw >= W) { btnVX *= -1; btnX = Math.max(bw, Math.min(W - bw, btnX)); }
+    if (btnY - bh <= 0 || btnY + bh >= H) { btnVY *= -1; btnY = Math.max(bh, Math.min(H - bh, btnY)); }
+    btn.style.left = btnX + 'px';
+    btn.style.top = btnY + 'px';
   }
   if (!trickActive && !trickComplete) {
     btn.style.display = 'none';
   }
-  if (trickComplete && t >= 0.88) finalRevealed = true;
+  if (trickComplete && t >= 0.85) finalRevealed = true;
 
   // -- Find keyframe segment --
   const segIdx = findSegment(t);
