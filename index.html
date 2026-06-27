@@ -15,37 +15,40 @@ html, body {
 canvas {
   position: fixed; top: 0; left: 0;
   width: 100vw; height: 100vh; z-index: 1;
+  pointer-events: none;
 }
-.scroll-container { height: 900vh; position: relative; z-index: 0; }
+.scroll-container { height: 1000vh; position: relative; z-index: 0; }
 #trickBtn {
   position: fixed; z-index: 10; padding: 14px 28px;
-  background: rgba(255,100,150,0.15);
-  border: 1px solid rgba(255,150,180,0.4);
+  background: rgba(255,100,150,0.12);
+  border: 1px solid rgba(255,150,180,0.35);
   color: #ffb8d0; font-size: 15px; border-radius: 24px;
   cursor: pointer; display: none;
   transform: translate(-50%, -50%);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   touch-action: manipulation; user-select: none;
-  box-shadow: 0 0 20px rgba(255,100,150,0.2), inset 0 0 20px rgba(255,100,150,0.05);
+  box-shadow: 0 0 25px rgba(255,100,150,0.15), inset 0 0 15px rgba(255,100,150,0.05);
   letter-spacing: 0.5px;
+  transition: transform 0.15s ease-out, box-shadow 0.2s;
+}
+#trickBtn:active {
+  transform: translate(-50%, -50%) scale(0.95);
+  box-shadow: 0 0 35px rgba(255,100,150,0.3), inset 0 0 20px rgba(255,100,150,0.1);
 }
 #tapCounter {
-  position: fixed; z-index: 10; color: rgba(255,180,200,0.8);
-  font-size: 18px; font-weight: bold; display: none;
+  position: fixed; z-index: 10; color: rgba(255,180,200,0.9);
+  font-size: 20px; font-weight: bold; display: none;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  text-shadow: 0 0 10px rgba(255,100,150,0.6);
+  text-shadow: 0 0 12px rgba(255,100,150,0.7);
+  transition: opacity 0.3s;
 }
 #sceneHint {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  z-index: 10; color: rgba(255,180,200,0.4); font-size: 12px;
-  letter-spacing: 2px; text-transform: uppercase;
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  z-index: 10; color: rgba(255,180,200,0.35); font-size: 11px;
+  letter-spacing: 3px; text-transform: uppercase;
   pointer-events: none;
-  animation: pulse-hint 2s ease-in-out infinite;
-}
-@keyframes pulse-hint {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+  transition: opacity 0.8s;
 }
 </style>
 </head>
@@ -54,7 +57,7 @@ canvas {
 <div class="scroll-container"></div>
 <button id="trickBtn">Reveal my gift 🎁</button>
 <div id="tapCounter"></div>
-<div id="sceneHint">scroll down</div>
+<div id="sceneHint">scroll down ↓</div>
 <script>
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
@@ -82,25 +85,23 @@ function randomPink() { return PINKS[Math.floor(Math.random() * PINKS.length)]; 
 
 const N = 4000;
 
-function sampleCanvas(off, colorful) {
+// -- Sampling functions --
+
+function sampleCanvas(off) {
   const c = off.getContext('2d');
-  const pixels = c.getImageData(0, 0, off.width, off.height).data;
-  const positions = [];
+  const px = c.getImageData(0, 0, off.width, off.height).data;
+  const pos = [];
   const gap = Math.max(2, Math.round(3 * (BASE / 390)));
   for (let y = 0; y < off.height; y += gap) {
     for (let x = 0; x < off.width; x += gap) {
       const i = (y * off.width + x) * 4;
-      if (pixels[i + 3] > 128) {
-        const pos = { x, y };
-        if (colorful) { pos.r = pixels[i]; pos.g = pixels[i+1]; pos.b = pixels[i+2]; }
-        positions.push(pos);
-      }
+      if (px[i + 3] > 128) pos.push({ x, y, r: px[i], g: px[i+1], b: px[i+2] });
     }
   }
-  return positions;
+  return pos;
 }
 
-function getTextPos(text, ratio, multiline) {
+function textPos(text, ratio, multi) {
   const fs = Math.round(BASE * ratio);
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
@@ -109,22 +110,20 @@ function getTextPos(text, ratio, multiline) {
   c.font = `bold ${fs}px Georgia, serif`;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
-  if (multiline) {
+  if (multi) {
     const lines = text.split('\n');
     const lh = fs * 1.3;
     const sy = CY - (lines.length - 1) * lh / 2;
     lines.forEach((l, i) => c.fillText(l, CX, sy + i * lh));
-  } else {
-    c.fillText(text, CX, CY);
-  }
+  } else c.fillText(text, CX, CY);
   return sampleCanvas(off);
 }
 
-function getHeartPos(sf) {
+function heartPos(sf) {
   const scale = BASE * sf;
   const pos = [];
-  for (let t = 0; t < Math.PI*2; t += 0.03) {
-    for (let r = 0; r < 1; r += 0.025) {
+  for (let t = 0; t < Math.PI*2; t += 0.025) {
+    for (let r = 0; r < 1; r += 0.02) {
       const hx = 16 * Math.pow(Math.sin(t), 3);
       const hy = -(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
       pos.push({ x: CX + hx*scale/17*r, y: CY + hy*scale/17*r });
@@ -133,7 +132,7 @@ function getHeartPos(sf) {
   return pos;
 }
 
-function getCatPos() {
+function catPos() {
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const c = off.getContext('2d');
@@ -158,11 +157,11 @@ function getCatPos() {
   [[-1,1],[1,1],[-1,0],[1,0],[-1,-1],[1,-1]].forEach(([dx,dy]) => {
     c.beginPath(); c.moveTo(CX+dx*s*0.1,CY+s*0.12); c.lineTo(CX+dx*s*0.45,CY+s*0.1+dy*s*0.05); c.stroke();
   });
-  return sampleCanvas(off, true);
+  return sampleCanvas(off);
 }
 
 // TODO: replace placeholder cat with real image
-let catImagePositions = null;
+let catImageLoaded = null;
 const catImg = new Image();
 catImg.onload = function() {
   const off = document.createElement('canvas');
@@ -171,94 +170,106 @@ catImg.onload = function() {
   const a = catImg.width / catImg.height;
   const dH = BASE * 0.65, dW = dH * a;
   c.drawImage(catImg, (W-dW)/2, (H-dH)/2, dW, dH);
-  catImagePositions = sampleCanvas(off, true);
-  buildKeyframes();
+  catImageLoaded = sampleCanvas(off);
+  build();
 };
 catImg.src = 'cat.jpg';
 
-// Each particle stores positions at each keyframe
-// Scroll interpolates between keyframes
-let keyframes = []; // array of { t, positions[N] }
-let particleColors = []; // [N] arrays of {r,g,b} per keyframe
-let particleSizes = [];
-let particleOpacities = [];
+// -- Per-particle properties (persistent) --
+const pSize = new Float32Array(N);
+const pOpacity = new Float32Array(N);
+const pDelay = new Float32Array(N);  // stagger offset per particle
+const pColor = new Uint8Array(N * 3);
+const pDriftPhase = new Float32Array(N);
 
-function randomScatter() {
-  const pos = [];
+function initParticleProps() {
   for (let i = 0; i < N; i++) {
-    pos.push({
-      x: Math.random() * W,
-      y: Math.random() * H
-    });
+    pSize[i] = 1.6 + Math.random() * 1.4;
+    pOpacity[i] = 0.45 + Math.random() * 0.55;
+    pDelay[i] = Math.random() * 0.04; // 0-4% stagger
+    pDriftPhase[i] = Math.random() * Math.PI * 2;
+    const c = randomPink();
+    pColor[i*3] = c[0]; pColor[i*3+1] = c[1]; pColor[i*3+2] = c[2];
   }
-  return pos;
 }
 
-function expandToN(positions) {
-  const result = [];
+// -- Keyframe system --
+// Each keyframe: { t: scrollPosition, px: Float32Array(N), py: Float32Array(N) }
+let keyframes = [];
+
+function scatter() {
+  const px = new Float32Array(N);
+  const py = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    px[i] = Math.random() * W;
+    py[i] = Math.random() * H;
+  }
+  return { px, py };
+}
+
+function toArrays(positions) {
+  const px = new Float32Array(N);
+  const py = new Float32Array(N);
   const len = positions.length;
   for (let i = 0; i < N; i++) {
     const p = positions[i % len];
-    result.push({ x: p.x, y: p.y, r: p.r, g: p.g, b: p.b });
+    px[i] = p.x;
+    py[i] = p.y;
   }
-  return result;
+  return { px, py };
 }
 
-function buildKeyframes() {
-  const heart = expandToN(getHeartPos(0.55));
-  const scatter1 = expandToN(randomScatter());
-  const text1 = expandToN(getTextPos('Happy\n18th\nBirthday', 0.14, true));
-  const scatter2 = expandToN(randomScatter());
-  const text2 = expandToN(getTextPos('I Love\nYou', 0.2, true));
-  const scatter3 = expandToN(randomScatter());
-  const cat = expandToN(catImagePositions || getCatPos());
-  const scatter4 = expandToN(randomScatter());
-  const text3 = expandToN(getTextPos('What do you think\nyour gift is?', 0.07, true));
-  const final = expandToN(getTextPos('Now look\nin front\nof you', 0.11, true));
+function build() {
+  const heart = toArrays(heartPos(0.55));
+  const s1 = scatter();
+  const t1 = toArrays(textPos('Happy\n18th\nBirthday', 0.14, true));
+  const s2 = scatter();
+  const t2 = toArrays(textPos('I Love\nYou', 0.2, true));
+  const s3 = scatter();
+  const cat = toArrays(catImageLoaded || catPos());
+  const s4 = scatter();
+  const t3 = toArrays(textPos('What do you think\nyour gift is?', 0.07, true));
+  const fin = toArrays(textPos('Now look\nin front\nof you', 0.11, true));
 
-  // t values: where each keyframe sits on 0-1 scroll
   keyframes = [
-    { t: 0.00, data: expandToN(randomScatter()) }, // start scattered
-    { t: 0.03, data: heart },        // heart formed
-    { t: 0.12, data: heart },        // heart hold
-    { t: 0.17, data: scatter1 },     // scatter
-    { t: 0.22, data: text1 },        // happy 18th formed
-    { t: 0.32, data: text1 },        // hold
-    { t: 0.37, data: scatter2 },     // scatter
-    { t: 0.42, data: text2 },        // i love you formed
-    { t: 0.50, data: text2 },        // hold
-    { t: 0.55, data: scatter3 },     // scatter
-    { t: 0.60, data: cat },          // cat formed
-    { t: 0.68, data: cat },          // hold
-    { t: 0.73, data: scatter4 },     // scatter
-    { t: 0.78, data: text3 },        // trick text formed
-    { t: 0.84, data: text3 },        // hold (scroll locked here)
-    { t: 0.90, data: final },        // final formed
-    { t: 1.00, data: final },        // final hold
+    { t: 0.000, ...scatter() },   // initial random
+    { t: 0.035, ...heart },       // heart formed
+    { t: 0.110, ...heart },       // heart hold
+    { t: 0.155, ...s1 },          // scatter out
+    { t: 0.200, ...t1 },          // text 1 formed
+    { t: 0.300, ...t1 },          // hold
+    { t: 0.345, ...s2 },          // scatter
+    { t: 0.390, ...t2 },          // text 2 formed
+    { t: 0.480, ...t2 },          // hold
+    { t: 0.525, ...s3 },          // scatter
+    { t: 0.570, ...cat },         // cat formed
+    { t: 0.650, ...cat },         // hold
+    { t: 0.695, ...s4 },          // scatter
+    { t: 0.740, ...t3 },          // trick text formed
+    { t: 0.810, ...t3 },          // trick hold (locked here)
+    { t: 0.870, ...fin },         // final formed
+    { t: 1.000, ...fin },         // final hold
   ];
-
-  // generate per-particle colors and sizes once
-  particleColors.length = 0;
-  particleSizes.length = 0;
-  particleOpacities.length = 0;
-  for (let i = 0; i < N; i++) {
-    const c = randomPink();
-    particleColors.push(c);
-    particleSizes.push(1.8 + Math.random() * 1.2);
-    particleOpacities.push(0.5 + Math.random() * 0.5);
-  }
 }
 
 resize();
-buildKeyframes();
+initParticleProps();
+build();
 
-let scrollProgress = 0;
+// -- Smooth scroll tracking --
+// Raw scroll updates instantly; we use a smoothed version that
+// lerps toward raw each frame for buttery feel
+let rawScroll = 0;
+let smoothScroll = 0;
+const SCROLL_SMOOTHING = 0.12; // higher = snappier, lower = smoother
+
 let trickTaps = 0;
 let trickActive = false;
 let trickComplete = false;
 let scrollLocked = false;
 let lockScrollY = 0;
 let finalRevealed = false;
+let time = 0;
 const btn = document.getElementById('trickBtn');
 const counter = document.getElementById('tapCounter');
 const hint = document.getElementById('sceneHint');
@@ -269,12 +280,12 @@ window.addEventListener('scroll', function() {
     return;
   }
   const maxScroll = document.body.scrollHeight - window.innerHeight;
-  scrollProgress = Math.min(1, window.scrollY / maxScroll);
-});
+  rawScroll = Math.min(1, window.scrollY / maxScroll);
+}, { passive: true });
 
 window.addEventListener('resize', () => {
   resize();
-  buildKeyframes();
+  build();
 });
 
 btn.addEventListener('pointerdown', function(e) {
@@ -299,7 +310,7 @@ btn.addEventListener('pointerdown', function(e) {
   counter.style.display = 'block';
   counter.style.left = e.clientX + 'px';
   counter.style.top = (e.clientY - 30) + 'px';
-  setTimeout(() => counter.style.display = 'none', 600);
+  setTimeout(() => counter.style.display = 'none', 500);
 
   const m = 70;
   btn.style.left = (m + Math.random() * (W - m*2)) + 'px';
@@ -308,114 +319,136 @@ btn.addEventListener('pointerdown', function(e) {
 
 let bursts = [];
 function spawnBurst(bx, by) {
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 25; i++) {
     const c = randomPink();
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 8;
     bursts.push({
       x: bx, y: by,
-      vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
-      life: 1, r: c[0], g: c[1], b: c[2]
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1, r: c[0], g: c[1], b: c[2],
+      size: 1 + Math.random() * 2
     });
   }
 }
 
-function getInterpolatedPosition(particleIdx, t) {
-  if (keyframes.length < 2) return { x: CX, y: CY };
+// -- Easing --
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3) / 2;
+}
 
-  // find the two keyframes we're between
-  let a = 0, b = 1;
+// -- Core interpolation --
+function findSegment(t) {
   for (let i = keyframes.length - 1; i >= 0; i--) {
     if (t >= keyframes[i].t) {
-      a = i;
-      b = Math.min(i + 1, keyframes.length - 1);
-      break;
+      return i;
     }
   }
-
-  if (a === b) {
-    const d = keyframes[a].data[particleIdx];
-    return { x: d.x, y: d.y };
-  }
-
-  const segStart = keyframes[a].t;
-  const segEnd = keyframes[b].t;
-  const localT = (t - segStart) / (segEnd - segStart);
-  // smooth easing
-  const ease = localT * localT * (3 - 2 * localT);
-
-  const pa = keyframes[a].data[particleIdx];
-  const pb = keyframes[b].data[particleIdx];
-
-  return {
-    x: pa.x + (pb.x - pa.x) * ease,
-    y: pa.y + (pb.y - pa.y) * ease
-  };
+  return 0;
 }
 
 function render() {
-  ctx.clearRect(0, 0, W, H);
+  const dt = 1/60;
+  time += dt;
 
-  let t = scrollProgress;
+  // Smooth scroll: lerp toward raw
+  smoothScroll += (rawScroll - smoothScroll) * SCROLL_SMOOTHING;
+  // Snap if very close (avoid infinite float drift)
+  if (Math.abs(smoothScroll - rawScroll) < 0.0001) smoothScroll = rawScroll;
 
-  // Handle trick button display
-  if (t >= 0.78 && t < 0.85 && !trickComplete) {
-    if (!trickActive) {
-      trickActive = true;
-      trickTaps = 0;
-      scrollLocked = true;
-      lockScrollY = window.scrollY;
-      btn.style.display = 'block';
-      btn.style.left = '50%';
-      btn.style.top = '72%';
-    }
-  } else if (!trickActive) {
+  const t = smoothScroll;
+
+  // -- UI state --
+  hint.style.opacity = t > 0.015 ? '0' : '1';
+
+  if (t >= 0.74 && t <= 0.82 && !trickComplete && !trickActive) {
+    trickActive = true;
+    trickTaps = 0;
+    scrollLocked = true;
+    lockScrollY = window.scrollY;
+    btn.style.display = 'block';
+    btn.style.left = '50%';
+    btn.style.top = '72%';
+  }
+  if (!trickActive && !trickComplete) {
     btn.style.display = 'none';
   }
+  if (trickComplete && t >= 0.84) finalRevealed = true;
 
-  if (trickComplete && t >= 0.85) {
-    finalRevealed = true;
-  }
+  // -- Find keyframe segment --
+  const segIdx = findSegment(t);
+  const nextIdx = Math.min(segIdx + 1, keyframes.length - 1);
+  const kfA = keyframes[segIdx];
+  const kfB = keyframes[nextIdx];
 
-  hint.style.opacity = t > 0.02 ? '0' : '';
+  let segLen = kfB.t - kfA.t;
+  if (segLen <= 0) segLen = 1;
 
-  ctx.shadowColor = 'rgba(255,120,160,0.7)';
-  ctx.shadowBlur = 8;
+  // -- Render particles --
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.shadowColor = 'rgba(255,120,160,0.6)';
+  ctx.shadowBlur = 6;
 
   for (let i = 0; i < N; i++) {
-    const pos = getInterpolatedPosition(i, t);
-    const col = particleColors[i];
+    // Per-particle staggered progress
+    let localT = (t - kfA.t) / segLen;
+    // Apply per-particle delay: shift the progress curve
+    // Particles with higher delay start moving later in the segment
+    localT = (localT - pDelay[i]) / (1 - pDelay[i]);
+    localT = Math.max(0, Math.min(1, localT));
 
-    ctx.globalAlpha = particleOpacities[i];
-    ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
+    const ease = easeInOutCubic(localT);
+
+    const ax = kfA.px[i];
+    const ay = kfA.py[i];
+    const bx = kfB.px[i];
+    const by = kfB.py[i];
+
+    let x = ax + (bx - ax) * ease;
+    let y = ay + (by - ay) * ease;
+
+    // Subtle organic drift (breathing)
+    const drift = pDriftPhase[i];
+    x += Math.sin(time * 0.7 + drift) * 0.5;
+    y += Math.cos(time * 0.5 + drift * 1.4) * 0.5;
+
+    ctx.globalAlpha = pOpacity[i];
+    const ci = i * 3;
+    ctx.fillStyle = `rgb(${pColor[ci]},${pColor[ci+1]},${pColor[ci+2]})`;
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, particleSizes[i], 0, Math.PI * 2);
+    ctx.arc(x, y, pSize[i], 0, Math.PI * 2);
     ctx.fill();
   }
 
   ctx.shadowBlur = 0;
   ctx.shadowColor = 'transparent';
 
-  // bursts
+  // -- Bursts --
   for (let i = bursts.length - 1; i >= 0; i--) {
     const b = bursts[i];
     b.x += b.vx; b.y += b.vy;
-    b.vx *= 0.96; b.vy *= 0.96;
-    b.life -= 0.025;
+    b.vx *= 0.95; b.vy *= 0.95;
+    b.life -= 0.02;
     if (b.life <= 0) { bursts.splice(i, 1); continue; }
-    ctx.globalAlpha = b.life;
-    ctx.shadowColor = `rgba(${b.r},${b.g},${b.b},0.6)`;
-    ctx.shadowBlur = 8;
+    ctx.globalAlpha = b.life * b.life; // quadratic fade
+    ctx.shadowColor = `rgba(${b.r},${b.g},${b.b},0.5)`;
+    ctx.shadowBlur = 10;
     ctx.fillStyle = `rgb(${b.r},${b.g},${b.b})`;
     ctx.beginPath();
-    ctx.arc(b.x, b.y, 2.5, 0, Math.PI * 2);
+    ctx.arc(b.x, b.y, b.size * b.life, 0, Math.PI * 2);
     ctx.fill();
   }
 
   ctx.shadowBlur = 0;
   ctx.shadowColor = 'transparent';
 
+  // -- Final glow --
   if (finalRevealed) {
-    const grad = ctx.createRadialGradient(CX, CY, 0, CX, CY, BASE * 0.6);
-    grad.addColorStop(0, 'rgba(255,100,150,0.06)');
+    const grad = ctx.createRadialGradient(CX, CY, 0, CX, CY, BASE * 0.55);
+    grad.addColorStop(0, 'rgba(255,100,150,0.07)');
+    grad.addColorStop(0.5, 'rgba(255,80,130,0.03)');
     grad.addColorStop(1, 'rgba(255,100,150,0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
