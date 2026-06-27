@@ -364,8 +364,7 @@ btn.addEventListener('pointerdown', function(e) {
   counter.style.top = (e.clientY - 30) + 'px';
   setTimeout(() => counter.style.display = 'none', 500);
 
-  // Speed up after each tap
-  const speed = 2.5 + trickTaps * 0.5;
+  const speed = 5 + trickTaps * 1.2;
   const angle = Math.random() * Math.PI * 2;
   btnVX = Math.cos(angle) * speed;
   btnVY = Math.sin(angle) * speed;
@@ -445,8 +444,8 @@ function render() {
     btn.style.display = 'block';
     btnX = W / 2;
     btnY = H * 0.72;
-    btnVX = 2.5;
-    btnVY = 1.8;
+    btnVX = 5;
+    btnVY = 3.5;
     btn.style.left = btnX + 'px';
     btn.style.top = btnY + 'px';
   }
@@ -479,14 +478,11 @@ function render() {
   rawLocalT = Math.max(0, Math.min(1, rawLocalT));
   const driftScale = kfA.drift + (kfB.drift - kfA.drift) * rawLocalT;
 
-  // -- Unified shape float (whole shape moves as one) + device tilt --
+  // -- Device tilt always active --
   smoothTiltX += (tiltX - smoothTiltX) * 0.08;
   smoothTiltY += (tiltY - smoothTiltY) * 0.08;
-  const shapeDrift = 1 - driftScale;
-  const tiltOffX = smoothTiltX * 60;
-  const tiltOffY = smoothTiltY * 40;
-  const shapeX = tiltOffX;
-  const shapeY = tiltOffY;
+  const shapeX = smoothTiltX * 60;
+  const shapeY = smoothTiltY * 40;
 
   // -- Render background ambient particles --
   ctx.clearRect(0, 0, W, H);
