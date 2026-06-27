@@ -165,6 +165,9 @@ function heartPos(sf) {
   }
   c.closePath();
   c.fill();
+  c.strokeStyle = 'white';
+  c.lineWidth = BASE * 0.015;
+  c.stroke();
   return sampleCanvas(off);
 }
 
@@ -255,7 +258,7 @@ function toArrays(positions) {
 }
 
 function build() {
-  const heart = toArrays(heartPos(0.22));
+  const heart = toArrays(heartPos(0.3));
   const s1 = scatter();
   const t1 = toArrays(textPos('Happy\n18th\nBirthday', 0.14, true));
   const s2 = scatter();
