@@ -278,6 +278,30 @@ let rawScroll = 0;
 let smoothScroll = 0;
 const SCROLL_SMOOTHING = 0.045;
 
+// -- Device tilt (gyroscope) --
+let tiltX = 0, tiltY = 0;
+let smoothTiltX = 0, smoothTiltY = 0;
+function initGyro() {
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    document.addEventListener('click', function reqPerm() {
+      DeviceOrientationEvent.requestPermission().then(r => {
+        if (r === 'granted') window.addEventListener('deviceorientation', onTilt);
+      });
+      document.removeEventListener('click', reqPerm);
+    }, { once: true });
+  } else {
+    window.addEventListener('deviceorientation', onTilt);
+  }
+}
+function onTilt(e) {
+  tiltX = (e.gamma || 0) / 45;
+  tiltY = (e.beta || 0) / 45;
+  tiltX = Math.max(-1, Math.min(1, tiltX));
+  tiltY = Math.max(-1, Math.min(1, tiltY));
+}
+initGyro();
+
 let trickTaps = 0;
 let trickActive = false;
 let trickComplete = false;
@@ -427,10 +451,14 @@ function render() {
   rawLocalT = Math.max(0, Math.min(1, rawLocalT));
   const driftScale = kfA.drift + (kfB.drift - kfA.drift) * rawLocalT;
 
-  // -- Unified shape float (whole shape moves as one) --
-  const shapeDrift = 1 - driftScale; // 1 when shape is formed, 0 when scattered
-  const shapeX = (Math.sin(time * 0.35) * 25 + Math.sin(time * 0.12) * 45 + Math.sin(time * 0.6) * 12) * shapeDrift;
-  const shapeY = (Math.cos(time * 0.25) * 25 + Math.cos(time * 0.09) * 45 + Math.cos(time * 0.5) * 12) * shapeDrift;
+  // -- Unified shape float (whole shape moves as one) + device tilt --
+  smoothTiltX += (tiltX - smoothTiltX) * 0.08;
+  smoothTiltY += (tiltY - smoothTiltY) * 0.08;
+  const shapeDrift = 1 - driftScale;
+  const tiltOffX = smoothTiltX * 40;
+  const tiltOffY = smoothTiltY * 25;
+  const shapeX = (Math.sin(time * 0.35) * 25 + Math.sin(time * 0.12) * 45 + Math.sin(time * 0.6) * 12) * shapeDrift + tiltOffX;
+  const shapeY = (Math.cos(time * 0.25) * 25 + Math.cos(time * 0.09) * 45 + Math.cos(time * 0.5) * 12) * shapeDrift + tiltOffY;
 
   // -- Render background ambient particles --
   ctx.clearRect(0, 0, W, H);
