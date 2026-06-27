@@ -201,10 +201,51 @@ catImg.onload = function() {
 };
 catImg.src = 'cat.jpg';
 
-// -- Line-art image --
+// -- Line-art path extraction --
 const lineArtImg = new Image();
-let lineArtReady = false;
-lineArtImg.onload = function() { lineArtReady = true; };
+let linePathX = null, linePathY = null, linePathLen = 0;
+lineArtImg.onload = function() {
+  const off = document.createElement('canvas');
+  const imgAspect = lineArtImg.width / lineArtImg.height;
+  const dH = H * 0.85, dW = dH * imgAspect;
+  off.width = W; off.height = H;
+  const oc = off.getContext('2d');
+  oc.drawImage(lineArtImg, (W - dW) / 2, (H - dH) / 2, dW, dH);
+  const imgData = oc.getImageData(0, 0, W, H).data;
+  const pts = [];
+  const gap = 4;
+  for (let y = 0; y < H; y += gap) {
+    for (let x = 0; x < W; x += gap) {
+      const i = (y * W + x) * 4;
+      if (imgData[i] + imgData[i+1] + imgData[i+2] > 80) {
+        pts.push(x, y);
+      }
+    }
+  }
+  const n = pts.length / 2;
+  if (n < 10) return;
+  const used = new Uint8Array(n);
+  const ordX = new Float32Array(n);
+  const ordY = new Float32Array(n);
+  let cur = 0;
+  used[0] = 1;
+  ordX[0] = pts[0]; ordY[0] = pts[1];
+  for (let step = 1; step < n; step++) {
+    let bestD = Infinity, bestJ = -1;
+    const cx = ordX[step-1], cy = ordY[step-1];
+    for (let j = 0; j < n; j++) {
+      if (used[j]) continue;
+      const dx = pts[j*2] - cx, dy = pts[j*2+1] - cy;
+      const d = dx*dx + dy*dy;
+      if (d < bestD) { bestD = d; bestJ = j; }
+    }
+    if (bestJ === -1) break;
+    used[bestJ] = 1;
+    ordX[step] = pts[bestJ*2];
+    ordY[step] = pts[bestJ*2+1];
+  }
+  linePathX = ordX; linePathY = ordY; linePathLen = n;
+};
 lineArtImg.src = 'lineart.png';
 
 // -- Per-particle properties (persistent) --
@@ -551,8 +592,8 @@ function render() {
     ctx.drawImage(sprites[pColorIdx[i]], x - sz/2, y - sz/2, sz, sz);
   }
 
-  // -- Line-art reveal --
-  if (lineArtReady && t >= 0.870 && t <= 0.920) {
+  // -- Line-art continuous line drawing --
+  if (linePathLen > 0 && t >= 0.870 && t <= 0.920) {
     let drawProgress;
     const drawStart = 0.870, drawEnd = 0.900, eraseStart = 0.900, eraseEnd = 0.920;
     if (t <= drawEnd) {
@@ -561,18 +602,27 @@ function render() {
       drawProgress = 1 - (t - eraseStart) / (eraseEnd - eraseStart);
     }
     drawProgress = Math.max(0, Math.min(1, drawProgress));
-    const imgAspect = lineArtImg.width / lineArtImg.height;
-    const drawH = H * 0.85;
-    const drawW = drawH * imgAspect;
-    const drawX = (W - drawW) / 2;
-    const drawY = (H - drawH) / 2;
-    ctx.save();
-    ctx.globalAlpha = drawProgress;
-    ctx.beginPath();
-    ctx.rect(0, 0, W, H * drawProgress);
-    ctx.clip();
-    ctx.drawImage(lineArtImg, drawX, drawY, drawW, drawH);
-    ctx.restore();
+    const pointCount = Math.floor(drawProgress * linePathLen);
+    if (pointCount > 1) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,130,170,0.8)';
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(linePathX[0], linePathY[0]);
+      for (let p = 1; p < pointCount; p++) {
+        const dx = linePathX[p] - linePathX[p-1];
+        const dy = linePathY[p] - linePathY[p-1];
+        if (dx*dx + dy*dy > 900) {
+          ctx.moveTo(linePathX[p], linePathY[p]);
+        } else {
+          ctx.lineTo(linePathX[p], linePathY[p]);
+        }
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   // -- Bursts --
